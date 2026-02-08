@@ -1,0 +1,69 @@
+.sidebar {
+  position: relative;
+  padding-top: 4rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.sidebar .logo {
+  display: flex;
+  font-weight: bold; /* not just font */
+  font-size: 22px;
+  height: 5rem;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar .logo img {
+  width: 3rem;
+  height: 3rem;
+
+}
+.sidebar .logo span span {
+  color: var(--pink);
+}
+
+.menu{
+    display: flex;
+    flex-direction: column;
+    margin-top: 4rem;
+    gap: 2rem;
+
+}
+.menuItem{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 2.5rem;
+    margin-left: 2rem;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    border-radius: 0.7rem;
+}
+
+.menuItem.active{
+    background: var(--activeItem);
+    margin-left: 0;
+
+}
+
+.active::before{
+    content: "";
+    width: 8px;
+    height: 100%;
+    background: var(--pink);
+    border-radius: 0 0.7rem 0.7rem 0;
+    margin-right: calc(1rem - 8px);
+}
+
+.menu .menuItem:last-child{
+    position: absolute;
+    bottom: 2.3rem;
+    width: 100%;
+}
+
+
