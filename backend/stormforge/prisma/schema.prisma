@@ -7,31 +7,51 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Organization {
   id        String   @id @default(uuid())
   name      String
-  email     String   @unique
-  password  String
-  role      String   @default("AGENT")
-  avatar    String?
-  active    Boolean  @default(true)
+  slug      String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  users     User[]
+  customers Customer[]
+  tickets   Ticket[]
+  tasks     Task[]
+  invites   Invite[]
+}
+
+model User {
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  password       String
+  role           String   @default("AGENT")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+
   assignedTickets Ticket[] @relation("AgentTickets")
+  assignedTasks   Task[]   @relation("AssignedTasks")
+  createdTasks    Task[]   @relation("CreatedTasks")
 }
 
 model Customer {
-  id           String   @id @default(uuid())
-  name         String
-  email        String?
-  phone        String?
-  company      String?
-  status       String   @default("ACTIVE")
-  tags         String?
-  lastActivity DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(uuid())
+  name           String
+  email          String?
+  phone          String?
+  company        String?
+  status         String   @default("ACTIVE")
+  tags           String?
+  lastActivity   DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
 
   tickets Ticket[]
 }
@@ -42,8 +62,12 @@ model Ticket {
   description     String
   status          String   @default("OPEN")
   priority        String   @default("MEDIUM")
+  source          String   @default("MANUAL")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  organizationId  String
 
   customer        Customer @relation(fields: [customerId], references: [id])
   customerId      String
@@ -51,7 +75,8 @@ model Ticket {
   assignedAgent   User?    @relation("AgentTickets", fields: [assignedAgentId], references: [id])
   assignedAgentId String?
 
-  messages        Message[]
+  messages Message[]
+  tasks    Task[]
 }
 
 model Message {
@@ -60,13 +85,40 @@ model Message {
   senderType String
   createdAt  DateTime @default(now())
 
-  ticket     Ticket   @relation(fields: [ticketId], references: [id])
-  ticketId   String
+  ticket   Ticket @relation(fields: [ticketId], references: [id])
+  ticketId String
 }
+
+model Task {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  priority    String    @default("MEDIUM")
+  status      String    @default("TODO")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+
+  assignedTo   User?   @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  assignedToId String?
+
+  ticket   Ticket? @relation(fields: [ticketId], references: [id])
+  ticketId String?
+
+  createdBy   User   @relation("CreatedTasks", fields: [createdById], references: [id])
+  createdById String
+}
+
 model Invite {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime @default(now())
+  id             String    @id @default(uuid())
+  token          String    @unique
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
 }
