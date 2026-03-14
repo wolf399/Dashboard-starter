@@ -1,9 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install"
+buildCommand = "npm install --ignore-engines"
 
 [deploy]
 startCommand = "npx prisma db push && npx tsx src/server.ts"
-
-[environment]
-NODE_VERSION = "20"
