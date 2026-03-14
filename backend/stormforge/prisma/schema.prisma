@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("AGENT")
+  avatar    String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedTickets Ticket[] @relation("AgentTickets")
+}
+
+model Customer {
+  id           String   @id @default(uuid())
+  name         String
+  email        String?
+  phone        String?
+  company      String?
+  status       String   @default("ACTIVE")
+  tags         String?
+  lastActivity DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tickets Ticket[]
+}
+
+model Ticket {
+  id              String   @id @default(uuid())
+  subject         String
+  description     String
+  status          String   @default("OPEN")
+  priority        String   @default("MEDIUM")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  customer        Customer @relation(fields: [customerId], references: [id])
+  customerId      String
+
+  assignedAgent   User?    @relation("AgentTickets", fields: [assignedAgentId], references: [id])
+  assignedAgentId String?
+
+  messages        Message[]
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  body       String
+  senderType String
+  createdAt  DateTime @default(now())
+
+  ticket     Ticket   @relation(fields: [ticketId], references: [id])
+  ticketId   String
+}
+model Invite {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
