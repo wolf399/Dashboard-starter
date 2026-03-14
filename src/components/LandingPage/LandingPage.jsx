@@ -26,32 +26,38 @@ const LandingPage = ({ onEnterApp }) => {
   }, []);
 
   const handleSubmit = async () => {
-    setError("");
-    setLoading(true);
-    try {
-      if (mode === "login") {
-        await login(form.email, form.password);
-      } else {
-        if (inviteToken) {
-          const result = await validateInvite(inviteToken);
-          if (!result.valid) {
-            setError(result.message || "Invalid or expired invite link.");
-            setLoading(false);
-            return;
-          }
-        }
-        await register(form.name, form.email, form.password, 'AGENT', inviteToken, form.orgName);
-        if (inviteToken) {
-          try { await markInviteUsed(inviteToken); } catch (e) { console.warn("Could not mark invite used", e); }
+  setError("");
+
+  // Validate fields before submitting
+  if (mode === "register") {
+    if (!form.name.trim()) { setError("Please enter your name."); return; }
+    if (!form.email.trim()) { setError("Please enter your email."); return; }
+    if (!form.password.trim()) { setError("Please enter a password."); return; }
+    if (!inviteToken && !form.orgName.trim()) { setError("Please enter your company name."); return; }
+  }
+
+  setLoading(true);
+  try {
+    if (mode === "login") {
+      await login(form.email, form.password);
+    } else {
+      if (inviteToken) {
+        const result = await validateInvite(inviteToken);
+        if (!result.valid) {
+          setError(result.message || "Invalid or expired invite link.");
+          setLoading(false);
+          return;
         }
       }
-      onEnterApp();
-    } catch (err) {
-      setError(err.message || "Something went wrong.");
-    } finally {
-      setLoading(false);
+      await register(form.name, form.email, form.password, 'AGENT', inviteToken, form.orgName);
     }
-  };
+    onEnterApp();
+  } catch (err) {
+    setError(err.message || "Something went wrong.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const features = [
     { emoji: "🎯", title: "Smart Inbox", desc: "All your customer conversations in one beautifully organized inbox. Filter by status, search instantly, never miss a message.", color: "#f0fdf4", accent: "#16a34a" },
