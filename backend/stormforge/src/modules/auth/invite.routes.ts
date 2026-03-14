@@ -2,13 +2,14 @@ import { FastifyInstance } from 'fastify';
 import crypto from 'crypto';
 
 export default async function inviteRoutes(fastify: FastifyInstance) {
-  // Generate invite link
+  // Generate invite link — scoped to org
   fastify.post('/generate', async (request: any, reply: any) => {
+    const user = await request.jwtVerify() as any;
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await fastify.prisma.invite.create({
-      data: { token, expiresAt },
+      data: { token, expiresAt, organizationId: user.organizationId },
     });
 
     return { token, expiresAt };
@@ -23,7 +24,7 @@ export default async function inviteRoutes(fastify: FastifyInstance) {
     if (invite.usedAt) return reply.status(400).send({ valid: false, message: 'Invite already used' });
     if (new Date() > invite.expiresAt) return reply.status(400).send({ valid: false, message: 'Invite link expired' });
 
-    return { valid: true };
+    return { valid: true, organizationId: invite.organizationId };
   });
 
   // Mark invite as used
