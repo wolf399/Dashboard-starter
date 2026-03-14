@@ -3,4 +3,4 @@ builder = "nixpacks"
 buildCommand = "npm install && npx prisma generate"
 
 [deploy]
-startCommand = "npx prisma db push && npx tsx src/server.ts"
+startCommand = "npx prisma db push --force-reset && npx tsx src/server.ts"
