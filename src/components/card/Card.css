@@ -1,0 +1,105 @@
+.CompactCard {
+  display: flex;
+  flex: 1;
+  height: 7rem !important; /* Smaller height for horizontal view */
+  border-radius: 0.7rem;
+  padding: 1rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 300ms ease;
+  color: #e6f9f0;
+}
+
+.CompactCard:hover {
+  box-shadow: none !important;
+}
+
+/* Fixes the Progress Circle on the Left */
+.radialBar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.radialBar .CircularProgressbar {
+  width: 4rem !important;
+  overflow: visible;
+}
+
+.radialBar .CircularProgressbar-path {
+  stroke: #00ca72 !important; /* Agent Green */
+}
+
+.radialBar .CircularProgressbar-trail {
+  stroke: #e6f9f0 !important;
+}
+
+.radialBar .CircularProgressbar-text {
+  fill: #1a1d23 !important;
+  font-weight: bold;
+}
+
+.radialBar span {
+  font-size: 14px;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.559);
+}
+
+/* Fixes the Details on the Right */
+.detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.detail svg {
+  font-size: 2rem;
+  color: #00ca72;
+}
+
+.valueText {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1d23;
+}
+
+.subText {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* --- Expanded Card Styling --- */
+.ExpandedCard {
+  position: absolute;
+  width: 60% !important;
+  height: 70vh !important;
+  z-index: 9;
+  left: 13rem;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  padding: 1rem;
+}
+
+.closeIcon {
+  align-self: flex-end;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.expandedTitle {
+  color: #1a1d23;
+  font-size: 26px;
+  font-weight: bold;
+  text-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+}
+
+.chartContainer {
+  width: 90%;
+}
