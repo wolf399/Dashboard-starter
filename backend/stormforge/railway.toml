@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install --ignore-engines"
+buildCommand = "npm install"
 
 [deploy]
-startCommand = "npx prisma db push && npx tsx src/server.ts"
+startCommand = "npx prisma db push && npx prisma generate && npx tsx src/server.ts"
