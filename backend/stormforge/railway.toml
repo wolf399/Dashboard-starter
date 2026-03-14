@@ -4,3 +4,6 @@ buildCommand = "npm install"
 
 [deploy]
 startCommand = "npx prisma db push && npx tsx src/server.ts"
+
+[environment]
+NODE_VERSION = "20"
