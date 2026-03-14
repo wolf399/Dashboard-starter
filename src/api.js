@@ -22,11 +22,11 @@ export const login = async (email, password) => {
   return data;
 };
 
-export const register = async (name, email, password, role = 'AGENT') => {
+export const register = async (name, email, password, role = 'AGENT', inviteToken = null, organizationName = null) => {
   const res = await fetch(`${BASE_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password, role }),
+    body: JSON.stringify({ name, email, password, role, inviteToken, organizationName }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);

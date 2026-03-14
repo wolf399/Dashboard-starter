@@ -4,7 +4,7 @@ import { login, register, validateInvite, markInviteUsed } from "../../api";
 
 const LandingPage = ({ onEnterApp }) => {
   const [mode, setMode] = useState(null);
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", orgName: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -40,7 +40,7 @@ const LandingPage = ({ onEnterApp }) => {
             return;
           }
         }
-        await register(form.name, form.email, form.password);
+        await register(form.name, form.email, form.password, 'AGENT', inviteToken, form.orgName);
         if (inviteToken) {
           try { await markInviteUsed(inviteToken); } catch (e) { console.warn("Could not mark invite used", e); }
         }
@@ -282,11 +282,11 @@ const LandingPage = ({ onEnterApp }) => {
             <h2>{mode === "login" ? "Welcome back 👋" : "Create your account"}</h2>
             <p className="auth-sub">{mode === "login" ? "Sign in to your workspace" : "Start your free trial today"}</p>
             {error && <div className="auth-error">{error}</div>}
-            {mode === "register" && (
+            {mode === "register" && !inviteToken && (
               <input
-                placeholder="Full name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Company / Workspace name"
+                value={form.orgName}
+                onChange={(e) => setForm({ ...form, orgName: e.target.value })}
               />
             )}
             <input
