@@ -272,54 +272,63 @@ const LandingPage = ({ onEnterApp }) => {
       </footer>
 
       {/* Auth Modal */}
-      {mode && (
-        <div className="auth-overlay" onClick={() => { setMode(null); setInviteToken(null); }}>
-          <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="auth-close" onClick={() => { setMode(null); setInviteToken(null); }}>×</button>
-            <div className="auth-logo">
-              <div className="nav-logo-icon">S</div>
-              <span>Shops<strong>CRM</strong></span>
-            </div>
-            {inviteToken && mode === "register" && (
-              <div className="invite-banner">
-                🎉 You've been invited! Create your account to join the workspace.
-              </div>
-            )}
-            <h2>{mode === "login" ? "Welcome back 👋" : "Create your account"}</h2>
-            <p className="auth-sub">{mode === "login" ? "Sign in to your workspace" : "Start your free trial today"}</p>
-            {error && <div className="auth-error">{error}</div>}
-            {mode === "register" && !inviteToken && (
-              <input
-                placeholder="Company / Workspace name"
-                value={form.orgName}
-                onChange={(e) => setForm({ ...form, orgName: e.target.value })}
-              />
-            )}
-            <input
-              placeholder="Email address"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <input
-              placeholder="Password"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            />
-            <button className="auth-submit" onClick={handleSubmit} disabled={loading}>
-              {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Create account"}
-            </button>
-            <p className="auth-switch">
-              {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={() => setMode(mode === "login" ? "register" : "login")}>
-                {mode === "login" ? "Sign up free" : "Sign in"}
-              </button>
-            </p>
-          </div>
+    {/* Auth Modal */}
+{mode && (
+  <div className="auth-overlay" onClick={() => { setMode(null); setInviteToken(null); }}>
+    <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+      <button className="auth-close" onClick={() => { setMode(null); setInviteToken(null); }}>×</button>
+      <div className="auth-logo">
+        <div className="nav-logo-icon">S</div>
+        <span>Shops<strong>CRM</strong></span>
+      </div>
+      {inviteToken && mode === "register" && (
+        <div className="invite-banner">
+          🎉 You've been invited! Create your account to join the workspace.
         </div>
       )}
+      <h2>{mode === "login" ? "Welcome back 👋" : "Create your account"}</h2>
+      <p className="auth-sub">{mode === "login" ? "Sign in to your workspace" : "Start your free trial today"}</p>
+      {error && <div className="auth-error">{error}</div>}
+
+      {mode === "register" && (
+        <input
+          placeholder="Full name"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+      )}
+      {mode === "register" && !inviteToken && (
+        <input
+          placeholder="Company / Workspace name"
+          value={form.orgName}
+          onChange={(e) => setForm({ ...form, orgName: e.target.value })}
+        />
+      )}
+      <input
+        placeholder="Email address"
+        type="email"
+        value={form.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })}
+      />
+      <input
+        placeholder="Password"
+        type="password"
+        value={form.password}
+        onChange={(e) => setForm({ ...form, password: e.target.value })}
+        onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+      />
+      <button className="auth-submit" onClick={handleSubmit} disabled={loading}>
+        {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Create account"}
+      </button>
+      <p className="auth-switch">
+        {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+        <button onClick={() => setMode(mode === "login" ? "register" : "login")}>
+          {mode === "login" ? "Sign up free" : "Sign in"}
+        </button>
+      </p>
+    </div>
+  </div>
+)}
     </div>
   );
 };
