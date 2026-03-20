@@ -19,6 +19,9 @@ import taskRoutes from './modules/task/task.routes.js';
 import aiRoutes from './modules/ai/ai.routes.js';
 import emailRoutes from './modules/email/email.routes.js';
 import inviteRoutes from './modules/auth/invite.routes.js';
+import organizationRoutes from './modules/organization/organization.routes.js';
+
+
 
 
 
@@ -131,6 +134,8 @@ export const build = async () => {
   await fastify.register(aiRoutes,       { prefix: '/api/ai' });
   await fastify.register(emailRoutes,    { prefix: '/api/email' });
   await fastify.register(inviteRoutes,    { prefix: '/api/invites' });
+  await fastify.register(organizationRoutes, { prefix: '/api/organization' });
+
 
 
   return fastify;

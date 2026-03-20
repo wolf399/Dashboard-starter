@@ -1,26 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Settings.css";
-import { generateInvite } from "../../api";
+import { generateInvite, getOrganization } from "../../api";
+
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
 const InviteSection = () => {
   const [inviteLink, setInviteLink] = useState("");
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
   const [expiresAt, setExpiresAt] = useState(null);
+  const [supportEmail, setSupportEmail] = useState("");
+
+  useEffect(() => {
+    getOrganization().then(org => {
+      if (org.inboundEmail) setSupportEmail(org.inboundEmail);
+    }).catch(console.error);
+  }, []);
 
   const handleGenerate = async () => {
-  setGenerating(true);
-  try {
-    const data = await generateInvite();
-    const link = `http://localhost:3001?invite=${data.token}`;
-    setInviteLink(link);
-    setExpiresAt(data.expiresAt);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setGenerating(false);
-  }
-};
+    setGenerating(true);
+    try {
+      const data = await generateInvite();
+      const link = `https://dashboard-starter-self.vercel.app?invite=${data.token}`;
+      setInviteLink(link);
+      setExpiresAt(data.expiresAt);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(inviteLink);
@@ -28,8 +38,30 @@ const InviteSection = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyEmail = () => {
+    navigator.clipboard.writeText(supportEmail);
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2000);
+  };
+
   return (
     <div className="invite-section">
+      {/* Support Email */}
+      {supportEmail && (
+        <div className="invite-link-box" style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}>
+          <div className="invite-link-header">
+            <span className="invite-link-label" style={{ color: "#3b82f6" }}>📧 Your Support Email</span>
+          </div>
+          <div className="invite-link-row">
+            <input readOnly value={supportEmail} className="invite-link-input" />
+            <button className="invite-copy-btn" style={{ background: "#3b82f6" }} onClick={handleCopyEmail}>
+              {copiedEmail ? "✅ Copied!" : "Copy"}
+            </button>
+          </div>
+          <p className="invite-hint">Share this email with your customers. Emails sent here will appear as tickets in your inbox.</p>
+        </div>
+      )}
+
       <div className="invite-info">
         <p>Share an invite link with your teammates. Each link is valid for <strong>7 days</strong> and can only be used <strong>once</strong>.</p>
       </div>
@@ -86,7 +118,7 @@ const Settings = ({ addToast }) => {
     setSavingProfile(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:3000/api/users/${currentUser.id}`, {
+      const res = await fetch(`${BASE_URL}/users/${currentUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: profileForm.name, email: profileForm.email }),
@@ -109,7 +141,7 @@ const Settings = ({ addToast }) => {
     setSavingPassword(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:3000/api/users/${currentUser.id}/password`, {
+      const res = await fetch(`${BASE_URL}/users/${currentUser.id}/password`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword }),
@@ -132,7 +164,6 @@ const Settings = ({ addToast }) => {
       </div>
 
       <div className="settings-layout">
-        {/* Sidebar tabs */}
         <div className="settings-tabs">
           {[
             { key: "profile", label: "Profile", icon: "👤" },
@@ -151,10 +182,7 @@ const Settings = ({ addToast }) => {
           ))}
         </div>
 
-        {/* Content */}
         <div className="settings-content">
-
-          {/* Profile Tab */}
           {activeTab === "profile" && (
             <div className="settings-card">
               <div className="settings-card-header">
@@ -189,7 +217,6 @@ const Settings = ({ addToast }) => {
             </div>
           )}
 
-          {/* Password Tab */}
           {activeTab === "password" && (
             <div className="settings-card">
               <div className="settings-card-header">
@@ -228,7 +255,6 @@ const Settings = ({ addToast }) => {
             </div>
           )}
 
-          {/* Preferences Tab */}
           {activeTab === "preferences" && (
             <div className="settings-card">
               <div className="settings-card-header">
@@ -262,7 +288,6 @@ const Settings = ({ addToast }) => {
             </div>
           )}
 
-          {/* Team & Invites Tab */}
           {activeTab === "team" && (
             <div className="settings-card">
               <div className="settings-card-header">
@@ -272,7 +297,6 @@ const Settings = ({ addToast }) => {
               <InviteSection />
             </div>
           )}
-
         </div>
       </div>
     </div>

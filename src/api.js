@@ -248,3 +248,12 @@ export const markInviteUsed = async (token) => {
   if (!res.ok) throw new Error(data.message);
   return data;
 };
+
+export const getOrganization = async () => {
+  const res = await fetch(`${BASE_URL}/organization`, {
+    headers: headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
