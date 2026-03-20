@@ -8,12 +8,18 @@ datasource db {
 }
 
 model Organization {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
   inboundEmail String?  @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  imapEmail    String?
+  imapPassword String?
+  imapHost     String?  @default("imap.gmail.com")
+  imapPort     Int?     @default(993)
+  imapEnabled  Boolean  @default(false)
+  lastImapSync DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   users     User[]
   customers Customer[]

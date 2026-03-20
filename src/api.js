@@ -257,3 +257,42 @@ export const getOrganization = async () => {
   if (!res.ok) throw new Error(data.message);
   return data;
 };
+
+// IMAP
+export const connectImap = async ({ email, password, host, port }) => {
+  const res = await fetch(`${BASE_URL}/imap/connect`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ email, password, host, port }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Connection failed');
+  return data;
+};
+
+export const disconnectImap = async () => {
+  const res = await fetch(`${BASE_URL}/imap/disconnect`, {
+    method: 'POST',
+    headers: headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const getImapStatus = async () => {
+  const res = await fetch(`${BASE_URL}/imap/status`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const syncImap = async () => {
+  const res = await fetch(`${BASE_URL}/imap/sync`, {
+    method: 'POST',
+    headers: headers(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};

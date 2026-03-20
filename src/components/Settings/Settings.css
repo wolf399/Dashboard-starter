@@ -315,3 +315,23 @@
 .invite-hint { font-size: 0.75rem; color: #9ca3af; margin: 0; }
 
 .danger-btn:hover { background: #fee2e2; }
+.email-section { display: flex; flex-direction: column; gap: 1.25rem; }
+.email-connected { display: flex; flex-direction: column; gap: 1rem; }
+.email-connected-header { display: flex; align-items: center; gap: 12px; padding: 1rem; background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 12px; }
+.email-status-dot { width: 10px; height: 10px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.2); flex-shrink: 0; }
+.email-connected-title { font-size: 0.875rem; font-weight: 700; color: #111827; }
+.email-connected-address { font-size: 0.78rem; color: #16a34a; font-family: monospace; }
+.email-connected-badge { margin-left: auto; background: #dcfce7; color: #16a34a; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.email-last-sync { font-size: 0.78rem; color: #9ca3af; margin: 0; }
+.email-actions { display: flex; gap: 8px; }
+.email-sync-btn { background: #f0fdf4; border: 1.5px solid #16a34a; color: #16a34a; border-radius: 8px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+.email-sync-btn:hover { background: #dcfce7; }
+.email-sync-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.email-disconnect-btn { background: none; border: 1.5px solid #e5e7eb; color: #6b7280; border-radius: 8px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.email-disconnect-btn:hover { border-color: #dc2626; color: #dc2626; }
+.email-info-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 14px; font-size: 0.85rem; color: #374151; line-height: 1.6; }
+.provider-hints { display: flex; gap: 8px; margin-bottom: 0.5rem; }
+.provider-chip { background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 14px; font-size: 0.8rem; font-weight: 600; color: #374151; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.provider-chip:hover { background: #e5e7eb; }
+.email-help-box { background: #fefce8; border: 1px solid #fde68a; border-radius: 10px; padding: 1rem; font-size: 0.825rem; color: #78350f; line-height: 1.7; }
+.email-help-box ol { margin: 8px 0 0 16px; }

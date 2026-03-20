@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./Settings.css";
-import { generateInvite, getOrganization } from "../../api";
+import { generateInvite, getOrganization, connectImap, disconnectImap, getImapStatus, syncImap } from "../../api";
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
@@ -46,7 +46,6 @@ const InviteSection = () => {
 
   return (
     <div className="invite-section">
-      {/* Support Email */}
       {supportEmail && (
         <div className="invite-link-box" style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}>
           <div className="invite-link-header">
@@ -61,7 +60,6 @@ const InviteSection = () => {
           <p className="invite-hint">Share this email with your customers. Emails sent here will appear as tickets in your inbox.</p>
         </div>
       )}
-
       <div className="invite-info">
         <p>Share an invite link with your teammates. Each link is valid for <strong>7 days</strong> and can only be used <strong>once</strong>.</p>
       </div>
@@ -85,6 +83,177 @@ const InviteSection = () => {
             </button>
           </div>
           <p className="invite-hint">Send this link to your teammate. They'll create an account and land straight in the app.</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const EmailSection = ({ addToast }) => {
+  const [status, setStatus] = useState(null);
+  const [form, setForm] = useState({ email: "", password: "", host: "imap.gmail.com", port: 993 });
+  const [connecting, setConnecting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    getImapStatus().then(setStatus).catch(console.error);
+  }, []);
+
+  const handleConnect = async () => {
+    if (!form.email || !form.password) {
+      addToast("Email and password are required", "error");
+      return;
+    }
+    setConnecting(true);
+    try {
+      await connectImap(form);
+      setStatus({ imapEmail: form.email, imapEnabled: true, lastImapSync: new Date() });
+      addToast("Email connected successfully!", "success");
+      setForm({ email: "", password: "", host: "imap.gmail.com", port: 993 });
+    } catch (err) {
+      addToast(err.message || "Failed to connect", "error");
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      await disconnectImap();
+      setStatus({ imapEmail: null, imapEnabled: false, lastImapSync: null });
+      addToast("Email disconnected", "info");
+    } catch (err) {
+      addToast("Failed to disconnect", "error");
+    }
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await syncImap();
+      setStatus(prev => ({ ...prev, lastImapSync: new Date() }));
+      addToast("Inbox synced!", "success");
+    } catch (err) {
+      addToast(err.message || "Sync failed", "error");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const providerHints = [
+    { name: "Gmail", host: "imap.gmail.com", port: 993 },
+    { name: "Outlook", host: "outlook.office365.com", port: 993 },
+    { name: "Yahoo", host: "imap.mail.yahoo.com", port: 993 },
+  ];
+
+  return (
+    <div className="email-section">
+      {status?.imapEnabled ? (
+        <div className="email-connected">
+          <div className="email-connected-header">
+            <div className="email-status-dot" />
+            <div>
+              <div className="email-connected-title">Email Connected</div>
+              <div className="email-connected-address">{status.imapEmail}</div>
+            </div>
+            <span className="email-connected-badge">Active</span>
+          </div>
+          {status.lastImapSync && (
+            <p className="email-last-sync">
+              Last synced: {new Date(status.lastImapSync).toLocaleString()}
+            </p>
+          )}
+          <div className="email-actions">
+            <button className="email-sync-btn" onClick={handleSync} disabled={syncing}>
+              {syncing ? "Syncing..." : "🔄 Sync Now"}
+            </button>
+            <button className="email-disconnect-btn" onClick={handleDisconnect}>
+              Disconnect
+            </button>
+          </div>
+          <div className="email-info-box">
+            <p>✅ Emails sent to <strong>{status.imapEmail}</strong> will automatically appear as tickets in your inbox. New emails are checked every 60 seconds.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="email-connect-form">
+          <div className="provider-hints">
+            {providerHints.map((p) => (
+              <button
+                key={p.name}
+                className="provider-chip"
+                onClick={() => setForm(f => ({ ...f, host: p.host, port: p.port }))}
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+          <div className="settings-form">
+            <div className="settings-form-group">
+              <label>Email Address</label>
+              <input
+                type="email"
+                placeholder="support@yourcompany.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </div>
+            <div className="settings-form-group">
+              <label>
+                App Password
+                <span className="field-hint" style={{ marginLeft: 6 }}>
+                  (Gmail: myaccount.google.com → Security → App Passwords)
+                </span>
+              </label>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Your app password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  style={{ paddingRight: "3rem" }}
+                />
+                <button
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#9ca3af" }}
+                >
+                  {showPassword ? "🙈" : "👁"}
+                </button>
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="settings-form-group">
+                <label>IMAP Host</label>
+                <input
+                  placeholder="imap.gmail.com"
+                  value={form.host}
+                  onChange={(e) => setForm({ ...form, host: e.target.value })}
+                />
+              </div>
+              <div className="settings-form-group">
+                <label>Port</label>
+                <input
+                  type="number"
+                  placeholder="993"
+                  value={form.port}
+                  onChange={(e) => setForm({ ...form, port: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+            <button className="settings-save-btn" onClick={handleConnect} disabled={connecting}>
+              {connecting ? "Connecting & testing..." : "Connect Email"}
+            </button>
+          </div>
+          <div className="email-help-box">
+            <strong>How to get a Gmail App Password:</strong>
+            <ol>
+              <li>Go to myaccount.google.com → Security</li>
+              <li>Enable 2-Step Verification if not already on</li>
+              <li>Search "App Passwords" → Select app: Mail</li>
+              <li>Copy the 16-character password and paste it above</li>
+            </ol>
+          </div>
         </div>
       )}
     </div>
@@ -170,6 +339,7 @@ const Settings = ({ addToast }) => {
             { key: "password", label: "Password", icon: "🔒" },
             { key: "preferences", label: "Preferences", icon: "⚙️" },
             { key: "team", label: "Team & Invites", icon: "👥" },
+            { key: "email", label: "Email Inbox", icon: "📧" },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -295,6 +465,16 @@ const Settings = ({ addToast }) => {
                 <p>Invite teammates to join your workspace</p>
               </div>
               <InviteSection />
+            </div>
+          )}
+
+          {activeTab === "email" && (
+            <div className="settings-card">
+              <div className="settings-card-header">
+                <h2>Email Inbox</h2>
+                <p>Connect your email so customer emails become tickets automatically</p>
+              </div>
+              <EmailSection addToast={addToast} />
             </div>
           )}
         </div>

@@ -20,6 +20,8 @@ import aiRoutes from './modules/ai/ai.routes.js';
 import emailRoutes from './modules/email/email.routes.js';
 import inviteRoutes from './modules/auth/invite.routes.js';
 import organizationRoutes from './modules/organization/organization.routes.js';
+import imapRoutes from './modules/imap/imap.routes.js';
+import { startImapPoller } from './modules/imap/imap.service.js';
 
 
 
@@ -135,6 +137,7 @@ export const build = async () => {
   await fastify.register(emailRoutes,    { prefix: '/api/email' });
   await fastify.register(inviteRoutes,    { prefix: '/api/invites' });
   await fastify.register(organizationRoutes, { prefix: '/api/organization' });
+  await fastify.register(imapRoutes, { prefix: '/api/imap' });
 
 
 
@@ -176,6 +179,12 @@ const start = async () => {
     fastify.log.info(`Server started in ${process.env.NODE_ENV || 'development'} mode`);
     fastify.log.info(`API Documentation: ${address}/docs`);
     fastify.log.info(`Health Check: ${address}/health`);
+
+    // Start IMAP poller in production
+    if (process.env.NODE_ENV === 'production') {
+      startImapPoller();
+    }
+
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
