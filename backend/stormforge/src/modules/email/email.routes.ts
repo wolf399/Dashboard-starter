@@ -1,8 +1,6 @@
 import { FastifyInstance } from 'fastify';
-import sgMail from '@sendgrid/mail';
 
 export default async function emailRoutes(fastify: FastifyInstance) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
 
   // Inbound email webhook — CloudMailin calls this when an email arrives
   fastify.post('/inbound', async (request: any, reply: any) => {
@@ -10,14 +8,33 @@ export default async function emailRoutes(fastify: FastifyInstance) {
       const body = request.body as any;
 
       const fromEmail = body.envelope?.from || body.headers?.from || '';
-      const fromName = body.envelope?.from || fromEmail;
+      const fromName = fromEmail.split('@')[0] || fromEmail;
+      const toEmail = body.envelope?.to || '';
       const subject = body.headers?.subject || 'No Subject';
       const text = body.plain || body.html || '';
 
       if (!fromEmail) return reply.status(200).send({ success: true });
 
-      // For now create in first organization — we'll scope this later
-      const org = await fastify.prisma.organization.findFirst();
+      // Extract org slug from subaddress e.g. support+my-org-slug@cloudmailin.net
+      let org = null;
+      const subMatch = toEmail.match(/\+([^@]+)@/);
+      if (subMatch) {
+        const slug = subMatch[1];
+        org = await fastify.prisma.organization.findUnique({ where: { slug } });
+      }
+
+      // Fallback to inboundEmail match
+      if (!org) {
+        org = await fastify.prisma.organization.findFirst({
+          where: { inboundEmail: toEmail },
+        });
+      }
+
+      // Last fallback — first org
+      if (!org) {
+        org = await fastify.prisma.organization.findFirst();
+      }
+
       if (!org) return reply.status(200).send({ success: true });
 
       // Find or create customer
@@ -58,31 +75,23 @@ export default async function emailRoutes(fastify: FastifyInstance) {
         },
       });
 
-      fastify.log.info(`New ticket created from email: ${subject}`);
+      fastify.log.info(`New ticket from email: ${subject} → org: ${org.name}`);
       return reply.status(200).send({ success: true });
     } catch (err) {
       fastify.log.error(err);
-      return reply.status(200).send({ success: true }); // Always return 200 to CloudMailin
+      return reply.status(200).send({ success: true });
     }
   });
 
-  // Send email to customer
+  // Send email reply to customer (placeholder — needs verified sender domain)
   fastify.post('/send', async (request: any, reply: any) => {
     try {
       const { to, subject, text, ticketId } = request.body as {
         to: string; subject: string; text: string; ticketId: string;
       };
 
-      await sgMail.send({
-        to,
-        from: 'support@shopscrm.io',
-        subject: `Re: ${subject}`,
-        text,
-        html: `<p>${text.replace(/\n/g, '<br/>')}</p>
-               <hr/>
-               <p style="color:#9ca3af;font-size:12px">Ticket ID: ${ticketId}</p>`,
-      });
-
+      // TODO: wire up sending when domain is ready
+      fastify.log.info(`Would send email to ${to}: ${subject}`);
       return { success: true };
     } catch (err: any) {
       fastify.log.error(err);

@@ -59,7 +59,11 @@ const authRoutes = async (fastify: FastifyInstance) => {
           const orgName = organizationName || `${name}'s Workspace`;
           const slug = generateSlug(orgName);
           const org = await fastify.prisma.organization.create({
-            data: { name: orgName, slug },
+            data: {
+              name: orgName,
+              slug,
+              inboundEmail: `552e0efa87304ddc1f27+${slug}@cloudmailin.net`,
+            },
           });
           organizationId = org.id;
         }
