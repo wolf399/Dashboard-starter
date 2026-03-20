@@ -71,15 +71,47 @@ export default async function imapRoutes(fastify: FastifyInstance) {
   });
 
   // Manual sync trigger
-  fastify.post('/sync', async (request: any, reply: any) => {
-    const user = await request.jwtVerify() as any;
-    const org = await fastify.prisma.organization.findUnique({
-      where: { id: user.organizationId },
-    });
-    if (!org?.imapEnabled) {
-      return reply.status(400).send({ message: 'IMAP not configured' });
-    }
-    await checkImapForOrg(org);
-    return { success: true };
+// Test the connection first - just try to connect, don't process emails
+fastify.post('/connect', async (request: any, reply: any) => {
+  const user = await request.jwtVerify() as any;
+  const { email, password, host, port } = request.body as any;
+
+  if (!email || !password) {
+    return reply.status(400).send({ message: 'Email and password are required' });
+  }
+
+  // Test connection only - just verify credentials work
+  const { ImapFlow } = await import('imapflow');
+  const client = new ImapFlow({
+    host: host || 'imap.gmail.com',
+    port: port || 993,
+    secure: true,
+    auth: { user: email, pass: password },
+    logger: false,
   });
-}
+
+  try {
+    await client.connect();
+    await client.logout();
+  } catch (err: any) {
+    return reply.status(400).send({
+      message: 'Could not connect to email. Check your credentials.',
+      detail: err.message,
+    });
+  }
+
+  // Save credentials
+  const updated = await fastify.prisma.organization.update({
+    where: { id: user.organizationId },
+    data: {
+      imapEmail: email,
+      imapPassword: password,
+      imapHost: host || 'imap.gmail.com',
+      imapPort: port || 993,
+      imapEnabled: true,
+      lastImapSync: null,
+    },
+  });
+
+  return { success: true, email: updated.imapEmail };
+});

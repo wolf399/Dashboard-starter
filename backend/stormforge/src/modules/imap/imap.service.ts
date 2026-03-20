@@ -120,14 +120,18 @@ export async function startImapPoller() {
   const poll = async () => {
     try {
       const orgs = await prisma.organization.findMany({
-        where: { imapEnabled: true, imapEmail: { not: null }, imapPassword: { not: null } },
+        where: { 
+          imapEnabled: true, 
+          imapEmail: { not: null }, 
+          imapPassword: { not: null } 
+        },
       });
 
       for (const org of orgs) {
         try {
           await checkImapForOrg(org);
-        } catch (err) {
-          // Continue with other orgs even if one fails
+        } catch (err: any) {
+          console.error(`IMAP error for org ${org.name}:`, err.message);
         }
       }
     } catch (err) {
@@ -135,7 +139,9 @@ export async function startImapPoller() {
     }
   };
 
-  // Poll immediately then every 60 seconds
-  await poll();
-  setInterval(poll, 60 * 1000);
+  // Wait 10 seconds before first poll to let server fully start
+  setTimeout(async () => {
+    await poll();
+    setInterval(poll, 60 * 1000);
+  }, 10000);
 }
