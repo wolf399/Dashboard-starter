@@ -20,15 +20,16 @@ export async function checkImapForOrg(org: any) {
     const lock = await client.getMailboxLock('INBOX');
 
     try {
-      // Fetch unseen emails since last sync
+      // Only fetch emails since last sync, or last 1 hour on first run
+      // This prevents importing entire inbox history
       const since = org.lastImapSync
         ? new Date(org.lastImapSync)
-        : new Date(Date.now() - 24 * 60 * 60 * 1000); // last 24h on first run
+        : new Date(Date.now() - 60 * 60 * 1000);
 
       const messages = [];
       for await (const msg of client.fetch(
         { seen: false, since },
-        { envelope: true, bodyStructure: true, source: true }
+        { envelope: true, uid: true }
       )) {
         messages.push(msg);
       }
@@ -43,6 +44,13 @@ export async function checkImapForOrg(org: any) {
         // Skip emails from own account
         if (fromEmail.toLowerCase() === org.imapEmail.toLowerCase()) continue;
 
+        // Mark as seen immediately to prevent reimporting on next sync
+        try {
+          await client.messageFlagsAdd({ uid: msg.uid }, ['\\Seen'], { uid: true });
+        } catch (flagErr) {
+          console.warn('Could not mark email as seen:', flagErr);
+        }
+
         // Find or create customer
         let customer = await prisma.customer.findFirst({
           where: { email: fromEmail, organizationId: org.id },
@@ -51,7 +59,7 @@ export async function checkImapForOrg(org: any) {
         if (!customer) {
           customer = await prisma.customer.create({
             data: {
-              name: fromName,
+              name: fromName || fromEmail,
               email: fromEmail,
               status: 'ACTIVE',
               organizationId: org.id,
@@ -59,14 +67,14 @@ export async function checkImapForOrg(org: any) {
           });
         }
 
-        // Check if ticket already exists for this email (avoid duplicates)
+        // Avoid duplicate tickets — check if same subject from same customer in last hour
         const existing = await prisma.ticket.findFirst({
           where: {
             organizationId: org.id,
             subject,
             customerId: customer.id,
             source: 'EMAIL',
-            createdAt: { gte: since },
+            createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) },
           },
         });
 
@@ -76,7 +84,7 @@ export async function checkImapForOrg(org: any) {
         const ticket = await prisma.ticket.create({
           data: {
             subject,
-            description: `Email received from ${fromEmail}`,
+            description: `Email received from ${fromName} <${fromEmail}>`,
             status: 'OPEN',
             priority: 'MEDIUM',
             source: 'EMAIL',
@@ -94,7 +102,7 @@ export async function checkImapForOrg(org: any) {
           },
         });
 
-        console.log(`Created ticket from email: ${subject} for org: ${org.name}`);
+        console.log(`New ticket from email: ${subject} — org: ${org.name}`);
       }
 
       // Update last sync time
@@ -120,10 +128,10 @@ export async function startImapPoller() {
   const poll = async () => {
     try {
       const orgs = await prisma.organization.findMany({
-        where: { 
-          imapEnabled: true, 
-          imapEmail: { not: null }, 
-          imapPassword: { not: null } 
+        where: {
+          imapEnabled: true,
+          imapEmail: { not: null },
+          imapPassword: { not: null },
         },
       });
 
@@ -139,9 +147,9 @@ export async function startImapPoller() {
     }
   };
 
-  // Wait 10 seconds before first poll to let server fully start
+  // Wait 15 seconds before first poll
   setTimeout(async () => {
     await poll();
     setInterval(poll, 60 * 1000);
-  }, 10000);
+  }, 15000);
 }
