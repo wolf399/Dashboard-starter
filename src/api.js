@@ -214,7 +214,10 @@ export const aiTranslate = async ({ text }) => {
 export const sendEmail = async ({ to, subject, text, ticketId }) => {
   const res = await fetch(`${BASE_URL}/email/send`, {
     method: 'POST',
-    headers: headers(),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
+    },
     body: JSON.stringify({ to, subject, text, ticketId }),
   });
   const data = await res.json();
@@ -273,7 +276,11 @@ export const connectImap = async ({ email, password, host, port }) => {
 export const disconnectImap = async () => {
   const res = await fetch(`${BASE_URL}/imap/disconnect`, {
     method: 'POST',
-    headers: headers(),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({}),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
