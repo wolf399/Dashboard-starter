@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
 export default async function emailRoutes(fastify: FastifyInstance) {
 
@@ -7,7 +7,6 @@ export default async function emailRoutes(fastify: FastifyInstance) {
   fastify.post('/inbound', async (request: any, reply: any) => {
     try {
       const body = request.body as any;
-
       const fromEmail = body.envelope?.from || body.headers?.from || '';
       const fromName = fromEmail.split('@')[0] || fromEmail;
       const toEmail = body.envelope?.to || '';
@@ -16,7 +15,6 @@ export default async function emailRoutes(fastify: FastifyInstance) {
 
       if (!fromEmail) return reply.status(200).send({ success: true });
 
-      // Find org by subaddress slug
       let org = null;
       const subMatch = toEmail.match(/\+([^@]+)@/);
       if (subMatch) {
@@ -60,21 +58,34 @@ export default async function emailRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Send email reply to customer
+  // Send email reply using org's own Gmail SMTP
   fastify.post('/send', async (request: any, reply: any) => {
     try {
-      const { to, subject, text, ticketId, fromName } = request.body as {
-        to: string;
-        subject: string;
-        text: string;
-        ticketId: string;
-        fromName?: string;
-      };
+      const user = await request.jwtVerify() as any;
+      const { to, subject, text, ticketId } = request.body as any;
 
-      const resend = new Resend(process.env.RESEND_API_KEY);
+      // Get org's IMAP/SMTP credentials
+      const org = await fastify.prisma.organization.findUnique({
+        where: { id: user.organizationId },
+      });
 
-      await resend.emails.send({
-        from: 'ShopsCRM Support <onboarding@resend.dev>',
+      if (!org?.imapEmail || !org?.imapPassword) {
+        return reply.status(400).send({ error: 'No email configured for this organization' });
+      }
+
+      // Use Gmail SMTP with same app password
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: org.imapEmail,
+          pass: org.imapPassword,
+        },
+      });
+
+      await transporter.sendMail({
+        from: `Support <${org.imapEmail}>`,
         to,
         subject: `Re: ${subject}`,
         html: `
@@ -82,7 +93,7 @@ export default async function emailRoutes(fastify: FastifyInstance) {
             <p>${text.replace(/\n/g, '<br/>')}</p>
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
             <p style="color: #9ca3af; font-size: 12px;">
-              This message was sent via ShopsCRM. Ticket ID: ${ticketId}
+              Ticket ID: ${ticketId} — Replied via ShopsCRM
             </p>
           </div>
         `,
