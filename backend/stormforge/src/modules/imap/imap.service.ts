@@ -20,11 +20,12 @@ export async function checkImapForOrg(org: any) {
     const lock = await client.getMailboxLock('INBOX');
 
     try {
-      // Only fetch emails since last sync, or last 1 hour on first run
+      // Only fetch emails since last sync
+      // On first run, only look at emails from the last 5 minutes
       // This prevents importing entire inbox history
       const since = org.lastImapSync
         ? new Date(org.lastImapSync)
-        : new Date(Date.now() - 60 * 60 * 1000);
+        : new Date(Date.now() - 5 * 60 * 1000);
 
       const messages = [];
       for await (const msg of client.fetch(
@@ -44,11 +45,11 @@ export async function checkImapForOrg(org: any) {
         // Skip emails from own account
         if (fromEmail.toLowerCase() === org.imapEmail.toLowerCase()) continue;
 
-        // Mark as seen immediately to prevent reimporting on next sync
+        // Mark as seen immediately to prevent reimporting
         try {
           await client.messageFlagsAdd({ uid: msg.uid }, ['\\Seen'], { uid: true });
         } catch (flagErr) {
-          console.warn('Could not mark email as seen:', flagErr);
+          console.warn('Could not mark email as seen');
         }
 
         // Find or create customer
@@ -67,14 +68,14 @@ export async function checkImapForOrg(org: any) {
           });
         }
 
-        // Avoid duplicate tickets — check if same subject from same customer in last hour
+        // Avoid duplicate tickets
         const existing = await prisma.ticket.findFirst({
           where: {
             organizationId: org.id,
             subject,
             customerId: customer.id,
             source: 'EMAIL',
-            createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) },
+            createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) },
           },
         });
 
@@ -147,7 +148,6 @@ export async function startImapPoller() {
     }
   };
 
-  // Wait 15 seconds before first poll
   setTimeout(async () => {
     await poll();
     setInterval(poll, 60 * 1000);
