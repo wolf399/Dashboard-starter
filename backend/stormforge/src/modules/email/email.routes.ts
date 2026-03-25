@@ -3,6 +3,26 @@ import nodemailer from 'nodemailer';
 
 export default async function emailRoutes(fastify: FastifyInstance) {
 
+  fastify.get('/test-smtp', async (request: any, reply: any) => {
+    const net = await import('net');
+    
+    const test = (host: string, port: number) => new Promise((resolve) => {
+      const socket = (net.default || net).createConnection({ host, port } as any);
+      socket.setTimeout(5000);
+      socket.on('connect', () => { socket.destroy(); resolve(`✅ ${host}:${port} OPEN`); });
+      socket.on('error', (err: any) => resolve(`❌ ${host}:${port} BLOCKED - ${err.message}`));
+      socket.on('timeout', () => { socket.destroy(); resolve(`❌ ${host}:${port} TIMEOUT`); });
+    });
+
+    const results = await Promise.all([
+      test('smtp.gmail.com', 465),
+      test('smtp.gmail.com', 587),
+      test('smtp.gmail.com', 25),
+    ]);
+
+    return { results };
+  });
+
   fastify.post('/inbound', async (request: any, reply: any) => {
     try {
       const body = request.body as any;
@@ -63,7 +83,7 @@ export default async function emailRoutes(fastify: FastifyInstance) {
       const user = await request.jwtVerify() as any;
       const { to, subject, text, ticketId } = request.body as any;
       
-      console.log('📧 Sending to:', to, 'subject:', subject);
+      console.log('�� Sending to:', to, 'subject:', subject);
 
       const org = await fastify.prisma.organization.findUnique({
         where: { id: user.organizationId },
@@ -114,4 +134,5 @@ export default async function emailRoutes(fastify: FastifyInstance) {
       return reply.status(500).send({ error: 'Failed to send email', detail: err.message });
     }
   });
+
 }
