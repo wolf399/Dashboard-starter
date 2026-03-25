@@ -78,11 +78,15 @@ export default async function emailRoutes(fastify: FastifyInstance) {
 
       const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
+        port: 587,
+        secure: false,
+        requireTLS: true,
         auth: {
           user: org.imapEmail,
           pass: org.imapPassword,
+        },
+        tls: {
+          rejectUnauthorized: false,
         },
       });
 
