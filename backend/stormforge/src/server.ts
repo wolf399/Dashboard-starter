@@ -66,7 +66,7 @@ export const build = async () => {
   });
   await fastify.register(cors, {
     origin:
-      process.env.NODE_ENV === 'production' ? process.env.ALLOWED_ORIGINS?.split(',') || [] : true,
+      true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   });
