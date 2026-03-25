@@ -129,6 +129,8 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
   };
 
   const handleSend = async () => {
+    console.log('Customer email:', ticket.customer?.email);
+    console.log('Reply mode:', replyMode);
   if (!replyText.trim()) return;
   try {
     const senderType = replyMode === "note" ? "NOTE" : "AGENT";
