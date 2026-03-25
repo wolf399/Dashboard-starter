@@ -3,7 +3,6 @@ import nodemailer from 'nodemailer';
 
 export default async function emailRoutes(fastify: FastifyInstance) {
 
-  // Inbound email webhook — CloudMailin
   fastify.post('/inbound', async (request: any, reply: any) => {
     try {
       const body = request.body as any;
@@ -58,22 +57,25 @@ export default async function emailRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Send email reply using org's own Gmail SMTP
   fastify.post('/send', async (request: any, reply: any) => {
+    console.log('📧 /api/email/send called');
     try {
       const user = await request.jwtVerify() as any;
       const { to, subject, text, ticketId } = request.body as any;
+      
+      console.log('📧 Sending to:', to, 'subject:', subject);
 
-      // Get org's IMAP/SMTP credentials
       const org = await fastify.prisma.organization.findUnique({
         where: { id: user.organizationId },
       });
 
+      console.log('📧 Org email:', org?.imapEmail, 'enabled:', org?.imapEnabled);
+
       if (!org?.imapEmail || !org?.imapPassword) {
+        console.log('📧 No email configured!');
         return reply.status(400).send({ error: 'No email configured for this organization' });
       }
 
-      // Use Gmail SMTP with same app password
       const transporter = nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 465,
@@ -84,7 +86,9 @@ export default async function emailRoutes(fastify: FastifyInstance) {
         },
       });
 
-      await transporter.sendMail({
+      console.log('📧 Attempting to send via SMTP...');
+      
+      const result = await transporter.sendMail({
         from: `Support <${org.imapEmail}>`,
         to,
         subject: `Re: ${subject}`,
@@ -92,16 +96,16 @@ export default async function emailRoutes(fastify: FastifyInstance) {
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
             <p>${text.replace(/\n/g, '<br/>')}</p>
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-            <p style="color: #9ca3af; font-size: 12px;">
-              Ticket ID: ${ticketId} — Replied via ShopsCRM
-            </p>
+            <p style="color: #9ca3af; font-size: 12px;">Ticket ID: ${ticketId} — Replied via ShopsCRM</p>
           </div>
         `,
         text,
       });
 
-      return { success: true };
+      console.log('📧 Email sent successfully:', result.messageId);
+      return { success: true, messageId: result.messageId };
     } catch (err: any) {
+      console.error('📧 SMTP Error:', err.message);
       fastify.log.error(err);
       return reply.status(500).send({ error: 'Failed to send email', detail: err.message });
     }
