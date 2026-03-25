@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./TicketDetails.css";
-import { getMessages, sendMessage, updateTicket, getUsers, aiSuggestReplies, aiSummarize, aiTranslate } from "../../api";
+import { getMessages, sendMessage, updateTicket, getUsers, aiSuggestReplies, aiSummarize, aiTranslate, sendEmail } from "../../api";
 
 const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
   const [messages, setMessages] = useState([]);
@@ -129,18 +129,35 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
   };
 
   const handleSend = async () => {
-    if (!replyText.trim()) return;
-    try {
-      const senderType = replyMode === "note" ? "NOTE" : "AGENT";
-      const newMessage = await sendMessage(ticket.id, replyText, senderType);
-      setMessages((prev) => [...prev, newMessage]);
-      setReplyText("");
-      setSuggestions([]);
+  if (!replyText.trim()) return;
+  try {
+    const senderType = replyMode === "note" ? "NOTE" : "AGENT";
+    const newMessage = await sendMessage(ticket.id, replyText, senderType);
+    setMessages((prev) => [...prev, newMessage]);
+
+    // Send email back to customer if they have an email and it's a reply
+    if (replyMode === "reply" && ticket.customer?.email) {
+      try {
+        await sendEmail({
+          to: ticket.customer.email,
+          subject: ticket.subject,
+          text: replyText,
+          ticketId: ticket.id,
+        });
+        addToast("Reply sent + email delivered to customer ✉️", "success");
+      } catch (e) {
+        addToast("Reply saved but email failed to send", "info");
+      }
+    } else {
       addToast(replyMode === "note" ? "Note added" : "Message sent", "success");
-    } catch (err) {
-      addToast("Failed to send", "error");
     }
-  };
+
+    setReplyText("");
+    setSuggestions([]);
+  } catch (err) {
+    addToast("Failed to send", "error");
+  }
+};
 
   const handleStatusChange = async (newStatus) => {
     setUpdatingStatus(true);
