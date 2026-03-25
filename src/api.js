@@ -290,7 +290,11 @@ export const getImapStatus = async () => {
 export const syncImap = async () => {
   const res = await fetch(`${BASE_URL}/imap/sync`, {
     method: 'POST',
-    headers: headers(),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({}),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
