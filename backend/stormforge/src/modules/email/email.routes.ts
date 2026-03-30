@@ -77,60 +77,33 @@ export default async function emailRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.post('/send', async (request: any, reply: any) => {
+ fastify.post('/send', async (request: any, reply: any) => {
     console.log('📧 /api/email/send called');
     try {
       const user = await request.jwtVerify() as any;
       const { to, subject, text, ticketId } = request.body as any;
-      
-      console.log('�� Sending to:', to, 'subject:', subject);
 
-      const org = await fastify.prisma.organization.findUnique({
-        where: { id: user.organizationId },
-      });
+      const { Resend } = await import('resend');
+      const resend = new Resend(process.env.RESEND_API_KEY);
 
-      console.log('📧 Org email:', org?.imapEmail, 'enabled:', org?.imapEnabled);
-
-      if (!org?.imapEmail || !org?.imapPassword) {
-        console.log('📧 No email configured!');
-        return reply.status(400).send({ error: 'No email configured for this organization' });
-      }
-
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        requireTLS: true,
-        auth: {
-          user: org.imapEmail,
-          pass: org.imapPassword,
-        },
-        tls: {
-          rejectUnauthorized: false,
-        },
-      });
-
-      console.log('📧 Attempting to send via SMTP...');
-      
-      const result = await transporter.sendMail({
-        from: `Support <${org.imapEmail}>`,
+      const result = await resend.emails.send({
+        from: 'Agent CRM <support@agent-crm.eu>',
         to,
         subject: `Re: ${subject}`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
             <p>${text.replace(/\n/g, '<br/>')}</p>
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
-            <p style="color: #9ca3af; font-size: 12px;">Ticket ID: ${ticketId} — Replied via ShopsCRM</p>
+            <p style="color: #9ca3af; font-size: 12px;">Ticket ID: ${ticketId} — Replied via Agent CRM</p>
           </div>
         `,
         text,
       });
 
-      console.log('📧 Email sent successfully:', result.messageId);
-      return { success: true, messageId: result.messageId };
+      console.log('📧 Email sent:', result);
+      return { success: true };
     } catch (err: any) {
-      console.error('📧 SMTP Error:', err.message);
-      fastify.log.error(err);
+      console.error('📧 Error:', err.message);
       return reply.status(500).send({ error: 'Failed to send email', detail: err.message });
     }
   });
