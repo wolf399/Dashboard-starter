@@ -167,7 +167,7 @@ const EmailSection = ({ addToast }) => {
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📧</div>
             <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: 700 }}>Connect your Gmail</h3>
             <p style={{ color: '#6b7280', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-              Emails sent to your Gmail will appear as tickets. Replies go out from your own Gmail address — just like HubSpot.
+              Emails sent to your Gmail will appear as tickets. Replies go out from your own Gmail address.
             </p>
             <button
               className="settings-save-btn"
