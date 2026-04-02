@@ -3,10 +3,6 @@ import { google } from 'googleapis';
 
 export default async function emailRoutes(fastify: FastifyInstance) {
 
-  fastify.get('/test-smtp', async (request: any, reply: any) => {
-    return { message: 'SMTP disabled, using Gmail API instead' };
-  });
-
   fastify.post('/inbound', async (request: any, reply: any) => {
     try {
       const body = request.body as any;
@@ -75,6 +71,11 @@ export default async function emailRoutes(fastify: FastifyInstance) {
         return reply.status(400).send({ error: 'Gmail not connected. Please connect your Gmail in Settings.' });
       }
 
+      // Get ticket to find threadId
+      const ticket = await fastify.prisma.ticket.findUnique({
+        where: { id: ticketId },
+      });
+
       const oauth2Client = new google.auth.OAuth2(
         process.env.GOOGLE_CLIENT_ID,
         process.env.GOOGLE_CLIENT_SECRET,
@@ -106,6 +107,8 @@ export default async function emailRoutes(fastify: FastifyInstance) {
         `To: ${to}`,
         `Subject: Re: ${subject}`,
         'Content-Type: text/html; charset=utf-8',
+        // Add In-Reply-To and References for threading
+        ...(ticket?.emailMessageId ? [`In-Reply-To: ${ticket.emailMessageId}`, `References: ${ticket.emailMessageId}`] : []),
         '',
         `<div style="font-family: sans-serif; max-width: 600px;">`,
         `<p>${text.replace(/\n/g, '<br/>')}</p>`,
@@ -123,7 +126,11 @@ export default async function emailRoutes(fastify: FastifyInstance) {
 
       await gmail.users.messages.send({
         userId: 'me',
-        requestBody: { raw: encodedEmail },
+        requestBody: {
+          raw: encodedEmail,
+          // Send in same Gmail thread
+          ...(ticket?.emailThreadId ? { threadId: ticket.emailThreadId } : {}),
+        },
       });
 
       console.log(`📧 Email sent via Gmail API from ${org.gmailEmail} to ${to}`);
