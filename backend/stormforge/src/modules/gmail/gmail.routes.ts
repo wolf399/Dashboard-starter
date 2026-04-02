@@ -15,9 +15,10 @@ export default async function gmailRoutes(fastify: FastifyInstance) {
     const user = await request.jwtVerify() as any;
     const oauth2Client = getOAuthClient();
 
-    const authUrl = oauth2Client.generateAuthUrl({
+   const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',
+      redirect_uri: 'https://appealing-reflection-production-7fbc.up.railway.app/api/gmail/callback',
       scope: [
         'https://www.googleapis.com/auth/gmail.readonly',
         'https://www.googleapis.com/auth/gmail.send',
