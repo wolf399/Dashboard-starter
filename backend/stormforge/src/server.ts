@@ -22,10 +22,7 @@ import inviteRoutes from './modules/auth/invite.routes.js';
 import organizationRoutes from './modules/organization/organization.routes.js';
 import imapRoutes from './modules/imap/imap.routes.js';
 import { startImapPoller } from './modules/imap/imap.service.js';
-
-
-
-
+import gmailRoutes, { startGmailPoller } from './modules/gmail/gmail.routes.js';
 
 const isMain = process.argv[1] === fileURLToPath(import.meta.url);
 const isTest =
@@ -65,8 +62,7 @@ export const build = async () => {
     threshold: 1024,
   });
   await fastify.register(cors, {
-    origin:
-      true,
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   });
@@ -127,19 +123,18 @@ export const build = async () => {
   }));
 
   // Routes
-  await fastify.register(authRoutes,     { prefix: '/api/auth' });
-  await fastify.register(userRoutes,     { prefix: '/api/users' });
-  await fastify.register(customerRoutes, { prefix: '/api/customers' });
-  await fastify.register(ticketRoutes,   { prefix: '/api/tickets' });
-  await fastify.register(messageRoutes,  { prefix: '/api/messages' });
-  await fastify.register(taskRoutes,     { prefix: '/api/tasks' });
-  await fastify.register(aiRoutes,       { prefix: '/api/ai' });
-  await fastify.register(emailRoutes,    { prefix: '/api/email' });
-  await fastify.register(inviteRoutes,    { prefix: '/api/invites' });
+  await fastify.register(authRoutes,         { prefix: '/api/auth' });
+  await fastify.register(userRoutes,         { prefix: '/api/users' });
+  await fastify.register(customerRoutes,     { prefix: '/api/customers' });
+  await fastify.register(ticketRoutes,       { prefix: '/api/tickets' });
+  await fastify.register(messageRoutes,      { prefix: '/api/messages' });
+  await fastify.register(taskRoutes,         { prefix: '/api/tasks' });
+  await fastify.register(aiRoutes,           { prefix: '/api/ai' });
+  await fastify.register(emailRoutes,        { prefix: '/api/email' });
+  await fastify.register(inviteRoutes,       { prefix: '/api/invites' });
   await fastify.register(organizationRoutes, { prefix: '/api/organization' });
-  await fastify.register(imapRoutes, { prefix: '/api/imap' });
-
-
+  await fastify.register(imapRoutes,         { prefix: '/api/imap' });
+  await fastify.register(gmailRoutes,        { prefix: '/api/gmail' });
 
   return fastify;
 };
@@ -180,9 +175,9 @@ const start = async () => {
     fastify.log.info(`API Documentation: ${address}/docs`);
     fastify.log.info(`Health Check: ${address}/health`);
 
-    // Start IMAP poller in production
     if (process.env.NODE_ENV === 'production') {
       startImapPoller();
+      startGmailPoller(fastify);
     }
 
   } catch (err) {
