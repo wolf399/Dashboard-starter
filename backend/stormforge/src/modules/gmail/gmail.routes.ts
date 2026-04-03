@@ -119,7 +119,7 @@ export async function checkGmailForOrg(org: any, fastify: any) {
     const full = await gmail.users.messages.get({
       userId: 'me',
       id: msg.id!,
-      format: 'full',
+      format: 'metadata',
     });
 
     const headers = full.data.payload?.headers || [];
