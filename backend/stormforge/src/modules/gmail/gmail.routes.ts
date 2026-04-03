@@ -87,23 +87,21 @@ export async function checkGmailForOrg(org: any, fastify: any) {
 
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-    // Only fetch message IDs — very lightweight
     const listRes = await gmail.users.messages.list({
       userId: 'me',
       q: 'is:unread in:inbox',
-      maxResults: 10,
+      maxResults: 5,
     });
 
     const messages = listRes.data.messages || [];
-    console.log(`Gmail: found ${messages.length} unread messages for ${org.gmailEmail}`);
+    console.log(`Gmail: ${messages.length} unread for ${org.gmailEmail}`);
 
     for (const msg of messages) {
-      // Only fetch metadata headers — no body, very lightweight
       const full = await gmail.users.messages.get({
         userId: 'me',
         id: msg.id!,
         format: 'metadata',
-        metadataHeaders: ['From', 'Subject', 'Message-ID', 'In-Reply-To'],
+        metadataHeaders: ['From', 'Subject', 'Message-ID'],
       });
 
       const headers = full.data.payload?.headers || [];
@@ -117,7 +115,6 @@ export async function checkGmailForOrg(org: any, fastify: any) {
       const fromName = from.replace(/<.+>/, '').trim() || fromEmail;
 
       if (!fromEmail || fromEmail.toLowerCase() === org.gmailEmail?.toLowerCase()) {
-        // Mark as read and skip
         await gmail.users.messages.modify({
           userId: 'me',
           id: msg.id!,
@@ -126,14 +123,12 @@ export async function checkGmailForOrg(org: any, fastify: any) {
         continue;
       }
 
-      // Mark as read
       await gmail.users.messages.modify({
         userId: 'me',
         id: msg.id!,
         requestBody: { removeLabelIds: ['UNREAD'] },
       });
 
-      // Check if reply to existing ticket
       const existingTicket = await fastify.prisma.ticket.findFirst({
         where: { organizationId: org.id, emailThreadId: threadId },
       });
@@ -142,11 +137,10 @@ export async function checkGmailForOrg(org: any, fastify: any) {
         await fastify.prisma.message.create({
           data: { body: `Reply from ${fromName} <${fromEmail}>`, senderType: 'CUSTOMER', ticketId: existingTicket.id },
         });
-        console.log(`Added reply to ticket: ${existingTicket.subject}`);
+        console.log(`Reply added to ticket: ${existingTicket.subject}`);
         continue;
       }
 
-      // Find or create customer
       let customer = await fastify.prisma.customer.findFirst({
         where: { email: fromEmail, organizationId: org.id },
       });
@@ -156,7 +150,6 @@ export async function checkGmailForOrg(org: any, fastify: any) {
         });
       }
 
-      // Create ticket
       const ticket = await fastify.prisma.ticket.create({
         data: {
           subject,
@@ -178,16 +171,8 @@ export async function checkGmailForOrg(org: any, fastify: any) {
       console.log(`New ticket: ${subject} — org: ${org.name}`);
     }
   } catch (err: any) {
-    console.error(`Gmail error for ${org.gmailEmail}:`, err.message);
+    console.error(`Gmail error:`, err.message);
   }
-}
-
-function getOAuthClient() {
-  return new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    'https://appealing-reflection-production-7fbc.up.railway.app/api/gmail/callback'
-  );
 }
 
 export async function startGmailPoller(fastify: any) {
@@ -196,13 +181,13 @@ export async function startGmailPoller(fastify: any) {
     try {
       const orgs = await fastify.prisma.organization.findMany({
         where: { gmailConnected: true, gmailAccessToken: { not: null } },
-        select: { id: true, name: true, gmailEmail: true, gmailAccessToken: true, gmailRefreshToken: true, gmailTokenExpiry: true },
+        select: { id: true, name: true, gmailEmail: true, gmailAccessToken: true, gmailRefreshToken: true },
       });
       for (const org of orgs) {
         await checkGmailForOrg(org, fastify);
       }
     } catch (err: any) {
-      console.error('Gmail poller error:', err.message);
+      console.error('Poller error:', err.message);
     }
   };
   setTimeout(async () => {
