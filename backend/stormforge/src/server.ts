@@ -175,10 +175,10 @@ const start = async () => {
     fastify.log.info(`API Documentation: ${address}/docs`);
     fastify.log.info(`Health Check: ${address}/health`);
 
-    if (process.env.NODE_ENV === 'production') {
-      startImapPoller();
-      startGmailPoller(fastify);
-    }
+   if (process.env.NODE_ENV === 'production') {
+     startImapPoller();
+     // Gmail poller disabled - use manual sync instead
+   }
 
   } catch (err) {
     fastify.log.error(err);
