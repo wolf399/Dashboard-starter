@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install && npx prisma generate && npx tsc --skipLibCheck || true"
+buildCommand = "npm install && npx prisma generate"
 
 [deploy]
-startCommand = "npx prisma db push --accept-data-loss && node dist/server.js"
+startCommand = "npx prisma db push --accept-data-loss && NODE_OPTIONS=--max-old-space-size=600 npx tsx src/server.ts"
