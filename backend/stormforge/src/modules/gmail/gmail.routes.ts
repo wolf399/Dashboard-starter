@@ -83,6 +83,15 @@ export default async function gmailRoutes(fastify: FastifyInstance) {
   });
 }
 
+  fastify.post("/sync", async (request: any, reply: any) => {
+    const user = await request.jwtVerify() as any;
+    const org = await fastify.prisma.organization.findUnique({ where: { id: user.organizationId } });
+    if (!org?.gmailConnected || !org?.gmailAccessToken) return reply.status(400).send({ error: "Gmail not connected" });
+    await checkGmailForOrg(org, fastify);
+    return { success: true };
+  });
+}
+
 export async function checkGmailForOrg(org: any, fastify: any) {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
