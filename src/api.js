@@ -1,6 +1,5 @@
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
-
 const getToken = () => localStorage.getItem('token');
 
 const headers = () => ({
@@ -109,6 +108,7 @@ export const sendMessage = async (ticketId, body, senderType = 'AGENT') => {
   if (!res.ok) throw new Error(data.message);
   return data;
 };
+
 // TASKS
 export const getTasks = async () => {
   const res = await fetch(`${BASE_URL}/tasks`, { headers: headers() });
@@ -150,12 +150,14 @@ export const deleteTask = async (id) => {
   }
 };
 
+// USERS
 export const getUsers = async () => {
   const res = await fetch(`${BASE_URL}/users`, { headers: headers() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
   return data.users;
 };
+
 // AI
 export const aiSuggestReplies = async ({ subject, customerName, conversation }) => {
   const res = await fetch(`${BASE_URL}/ai/suggest`, {
@@ -211,26 +213,24 @@ export const aiTranslate = async ({ text }) => {
   if (!res.ok) throw new Error(data.message);
   return data;
 };
+
+// EMAIL
 export const sendEmail = async ({ to, subject, text, ticketId }) => {
   const res = await fetch(`${BASE_URL}/email/send`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: headers(),
     body: JSON.stringify({ to, subject, text, ticketId }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
   return data;
 };
+
 // INVITES
 export const generateInvite = async () => {
   const res = await fetch(`${BASE_URL}/invites/generate`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: headers(),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
@@ -252,34 +252,33 @@ export const markInviteUsed = async (token) => {
   return data;
 };
 
+// ORGANIZATION
 export const getOrganization = async () => {
-  const res = await fetch(`${BASE_URL}/organization`, {
-    headers: headers(),
-  });
+  const res = await fetch(`${BASE_URL}/organization`, { headers: headers() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
   return data;
 };
 
-// IMAP
-export const connectImap = async ({ email, password, host, port }) => {
-  const res = await fetch(`${BASE_URL}/imap/connect`, {
-    method: 'POST',
-    headers: headers(),
-    body: JSON.stringify({ email, password, host, port }),
-  });
+// GMAIL OAUTH
+export const getGmailAuthUrl = async () => {
+  const res = await fetch(`${BASE_URL}/gmail/auth`, { headers: headers() });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Connection failed');
+  if (!res.ok) throw new Error(data.message);
   return data;
 };
 
-export const disconnectImap = async () => {
-  const res = await fetch(`${BASE_URL}/imap/disconnect`, {
+export const getGmailStatus = async () => {
+  const res = await fetch(`${BASE_URL}/gmail/status`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const disconnectGmail = async () => {
+  const res = await fetch(`${BASE_URL}/gmail/disconnect`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: headers(),
     body: JSON.stringify({}),
   });
   const data = await res.json();
@@ -287,20 +286,10 @@ export const disconnectImap = async () => {
   return data;
 };
 
-export const getImapStatus = async () => {
-  const res = await fetch(`${BASE_URL}/imap/status`, { headers: headers() });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message);
-  return data;
-};
-
-export const syncImap = async () => {
-  const res = await fetch(`${BASE_URL}/imap/sync`, {
+export const syncGmail = async () => {
+  const res = await fetch(`${BASE_URL}/gmail/sync`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-    },
+    headers: headers(),
     body: JSON.stringify({}),
   });
   const data = await res.json();
