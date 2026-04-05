@@ -74,14 +74,15 @@ model Ticket {
   status          String   @default("OPEN")
   priority        String   @default("MEDIUM")
   source          String   @default("MANUAL")
-  emailThreadId   String?
-  emailMessageId  String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
   organization    Organization @relation(fields: [organizationId], references: [id])
   organizationId  String
+
   customer        Customer @relation(fields: [customerId], references: [id])
   customerId      String
+
   assignedAgent   User?    @relation("AgentTickets", fields: [assignedAgentId], references: [id])
   assignedAgentId String?
 

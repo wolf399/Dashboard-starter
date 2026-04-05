@@ -21,7 +21,8 @@ import emailRoutes from './modules/email/email.routes.js';
 import inviteRoutes from './modules/auth/invite.routes.js';
 import organizationRoutes from './modules/organization/organization.routes.js';
 import imapRoutes from './modules/imap/imap.routes.js';
-import gmailRoutes from './modules/gmail/gmail.routes.js';
+import { startImapPoller } from './modules/imap/imap.service.js';
+import gmailRoutes, { startGmailPoller } from './modules/gmail/gmail.routes.js';
 
 const isMain = process.argv[1] === fileURLToPath(import.meta.url);
 const isTest =
@@ -36,19 +37,30 @@ export const build = async () => {
     logger: isTest
       ? false
       : {
-          level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'development' ? 'info' : 'warn'),
+          level:
+            process.env.LOG_LEVEL || (process.env.NODE_ENV === 'development' ? 'info' : 'warn'),
           transport: {
             target: 'pino-pretty',
-            options: { colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' },
+            options: {
+              colorize: true,
+              translateTime: 'SYS:standard',
+              ignore: 'pid,hostname',
+            },
           },
         },
     disableRequestLogging: process.env.NODE_ENV === 'production',
   });
 
   await fastify.register(sensible);
-  await fastify.register(jwt, { secret: process.env.JWT_SECRET || 'fallback-secret' });
+  await fastify.register(jwt, {
+    secret: process.env.JWT_SECRET || 'fallback-secret',
+  });
   await fastify.register(prismaPlugin);
-  await fastify.register(compress, { global: true, encodings: ['gzip', 'deflate'], threshold: 1024 });
+  await fastify.register(compress, {
+    global: true,
+    encodings: ['gzip', 'deflate'],
+    threshold: 1024,
+  });
   await fastify.register(cors, {
     origin: true,
     credentials: true,
@@ -64,17 +76,53 @@ export const build = async () => {
     },
     crossOriginEmbedderPolicy: false,
   });
-  await fastify.register(rateLimit, { max: 100, timeWindow: '1 minute', allowList: ['127.0.0.1'], skipOnError: false });
+  await fastify.register(rateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+    allowList: ['127.0.0.1'],
+    skipOnError: false,
+  });
   await fastify.register(swagger, {
     openapi: {
-      info: { title: 'Agent CRM API', version: '1.0.0', description: 'Agent CRM API' },
-      components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } } },
+      info: {
+        title: 'StormForge API',
+        version: '1.0.0',
+        description: 'Production-ready REST API framework',
+        contact: {
+          name: 'API Support',
+          email: process.env.SUPPORT_EMAIL,
+        },
+      },
+      servers: [
+        {
+          url:
+            process.env.NODE_ENV === 'production'
+              ? `https://${process.env.DOMAIN || 'localhost'}`
+              : `http://localhost:${process.env.PORT || 3000}`,
+          description: `${process.env.NODE_ENV} server`,
+        },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+        },
+      },
     },
   });
   await fastify.register(swaggerUi, { routePrefix: '/docs' });
 
-  fastify.get('/health', async () => ({ status: 'OK', timestamp: new Date().toISOString(), uptime: process.uptime() }));
+  // Health check
+  fastify.get('/health', async () => ({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  }));
 
+  // Routes
   await fastify.register(authRoutes,         { prefix: '/api/auth' });
   await fastify.register(userRoutes,         { prefix: '/api/users' });
   await fastify.register(customerRoutes,     { prefix: '/api/customers' });
@@ -92,12 +140,17 @@ export const build = async () => {
 };
 
 const setupGracefulShutdown = (fastify: Fastify.FastifyInstance) => {
-  ['SIGTERM', 'SIGINT'].forEach((signal) => {
+  const signals = ['SIGTERM', 'SIGINT'];
+
+  signals.forEach((signal) => {
     process.on(signal, async () => {
+      fastify.log.info(`Received ${signal}, starting graceful shutdown...`);
       try {
         await fastify.close();
+        fastify.log.info('Server closed successfully');
         process.exit(0);
-      } catch (err) {
+      } catch (err: any) {
+        fastify.log.error('Error during graceful shutdown:', err);
         process.exit(1);
       }
     });
@@ -106,17 +159,33 @@ const setupGracefulShutdown = (fastify: Fastify.FastifyInstance) => {
 
 const start = async () => {
   const fastify = await build();
+
   setupGracefulShutdown(fastify);
+
   try {
     const address = await fastify.listen({
       port: Number(process.env.PORT) || 3000,
       host: process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1',
+      listenTextResolver: (address) => {
+        return `StormForge server listening at ${address}`;
+      },
     });
-    console.log(`Server listening at ${address}`);
+
+    fastify.log.info(`Server started in ${process.env.NODE_ENV || 'development'} mode`);
+    fastify.log.info(`API Documentation: ${address}/docs`);
+    fastify.log.info(`Health Check: ${address}/health`);
+
+    if (process.env.NODE_ENV === 'production') {
+      startImapPoller();
+      startGmailPoller(fastify);
+    }
+
   } catch (err) {
-    console.error(err);
+    fastify.log.error(err);
     process.exit(1);
   }
 };
 
-if (isMain) start();
+if (isMain) {
+  start();
+}

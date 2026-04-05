@@ -8,23 +8,18 @@ datasource db {
 }
 
 model Organization {
-  id                String    @id @default(uuid())
-  name              String
-  slug              String    @unique
-  inboundEmail      String?   @unique
-  imapEmail         String?
-  imapPassword      String?
-  imapHost          String?   @default("imap.gmail.com")
-  imapPort          Int?      @default(993)
-  imapEnabled       Boolean   @default(false)
-  lastImapSync      DateTime?
-  gmailAccessToken  String?
-  gmailRefreshToken String?
-  gmailTokenExpiry  DateTime?
-  gmailEmail        String?
-  gmailConnected    Boolean   @default(false)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  inboundEmail String?  @unique
+  imapEmail    String?
+  imapPassword String?
+  imapHost     String?  @default("imap.gmail.com")
+  imapPort     Int?     @default(993)
+  imapEnabled  Boolean  @default(false)
+  lastImapSync DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   users     User[]
   customers Customer[]
@@ -42,8 +37,8 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization    Organization @relation(fields: [organizationId], references: [id])
-  organizationId  String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
 
   assignedTickets Ticket[] @relation("AgentTickets")
   assignedTasks   Task[]   @relation("AssignedTasks")
@@ -75,8 +70,6 @@ model Ticket {
   status          String   @default("OPEN")
   priority        String   @default("MEDIUM")
   source          String   @default("MANUAL")
-  emailThreadId   String?
-  emailMessageId  String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
