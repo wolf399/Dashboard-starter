@@ -1,52 +1,72 @@
 import { FastifyInstance } from 'fastify';
-import { google } from 'googleapis';
 
 const REDIRECT_URI = 'https://appealing-reflection-production-7fbc.up.railway.app/api/gmail/callback';
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 
-const getOAuthClient = () => new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  REDIRECT_URI
-);
+const getAuthUrl = (state: string) => {
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    response_type: 'code',
+    access_type: 'offline',
+    prompt: 'consent',
+    scope: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.email',
+    state,
+  });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+};
+
+const getTokens = async (code: string) => {
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ code, client_id: CLIENT_ID, client_secret: CLIENT_SECRET, redirect_uri: REDIRECT_URI, grant_type: 'authorization_code' }),
+  });
+  return res.json();
+};
+
+const getUserEmail = async (accessToken: string) => {
+  const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return res.json();
+};
+
+const gmailFetch = async (accessToken: string, path: string, options: any = {}) => {
+  const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me${path}`, {
+    ...options,
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', ...options.headers },
+  });
+  if (!res.ok) throw new Error(`Gmail API error: ${res.status}`);
+  return res.json();
+};
 
 export default async function gmailRoutes(fastify: FastifyInstance) {
 
   fastify.get('/auth', async (request: any, reply: any) => {
     const user = await request.jwtVerify() as any;
-    const oauth2Client = getOAuthClient();
-    const authUrl = oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      prompt: 'consent',
-      redirect_uri: REDIRECT_URI,
-      scope: [
-        'https://www.googleapis.com/auth/gmail.readonly',
-        'https://www.googleapis.com/auth/gmail.send',
-        'https://www.googleapis.com/auth/gmail.modify',
-        'https://www.googleapis.com/auth/userinfo.email',
-      ],
-      state: user.organizationId,
-    });
-    return { url: authUrl };
+    return { url: getAuthUrl(user.organizationId) };
   });
 
   fastify.get('/callback', async (request: any, reply: any) => {
     const { code, state: organizationId } = request.query as any;
     if (!code || !organizationId) return reply.status(400).send({ message: 'Missing code or state' });
-    const oauth2Client = getOAuthClient();
-    const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
-    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
-    const { data } = await oauth2.userinfo.get();
+
+    const tokens = await getTokens(code);
+    const userInfo = await getUserEmail(tokens.access_token);
+
     await fastify.prisma.organization.update({
       where: { id: organizationId },
       data: {
         gmailAccessToken: tokens.access_token,
         gmailRefreshToken: tokens.refresh_token,
-        gmailTokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
-        gmailEmail: data.email,
+        gmailTokenExpiry: tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null,
+        gmailEmail: userInfo.email,
         gmailConnected: true,
       },
     });
+
     return reply.redirect('https://dashboard-starter-self.vercel.app?gmailConnected=true');
   });
 
@@ -80,52 +100,34 @@ export default async function gmailRoutes(fastify: FastifyInstance) {
 
 export async function checkGmailForOrg(org: any, fastify: any) {
   try {
-    const oauth2Client = getOAuthClient();
-    oauth2Client.setCredentials({
-      access_token: org.gmailAccessToken,
-      refresh_token: org.gmailRefreshToken,
-    });
-
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-
-    const listRes = await gmail.users.messages.list({
-      userId: 'me',
-      q: 'is:unread in:inbox',
-      maxResults: 5,
-    });
-
-    const messages = listRes.data.messages || [];
+    const listData = await gmailFetch(org.gmailAccessToken, '/messages?maxResults=5&q=is:unread+in:inbox');
+    const messages = listData.messages || [];
     console.log(`Gmail: ${messages.length} unread for ${org.gmailEmail}`);
 
     for (const msg of messages) {
-      const full = await gmail.users.messages.get({
-        userId: 'me',
-        id: msg.id!,
-        format: 'metadata',
-        metadataHeaders: ['From', 'Subject', 'Message-ID'],
-      });
+      const full = await gmailFetch(org.gmailAccessToken, `/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Message-ID`);
 
-      const headers = full.data.payload?.headers || [];
+      const headers = full.payload?.headers || [];
       const from = headers.find((h: any) => h.name === 'From')?.value || '';
       const subject = headers.find((h: any) => h.name === 'Subject')?.value || 'No Subject';
       const messageId = headers.find((h: any) => h.name === 'Message-ID')?.value || '';
-      const threadId = full.data.threadId || '';
+      const threadId = full.threadId || '';
 
       const emailMatch = from.match(/<(.+)>/) || [null, from];
       const fromEmail = (emailMatch[1] || from).trim();
       const fromName = from.replace(/<.+>/, '').trim() || fromEmail;
 
       if (!fromEmail || fromEmail.toLowerCase() === org.gmailEmail?.toLowerCase()) {
-        await gmail.users.messages.modify({
-          userId: 'me', id: msg.id!,
-          requestBody: { removeLabelIds: ['UNREAD'] },
+        await gmailFetch(org.gmailAccessToken, `/messages/${msg.id}/modify`, {
+          method: 'POST',
+          body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
         });
         continue;
       }
 
-      await gmail.users.messages.modify({
-        userId: 'me', id: msg.id!,
-        requestBody: { removeLabelIds: ['UNREAD'] },
+      await gmailFetch(org.gmailAccessToken, `/messages/${msg.id}/modify`, {
+        method: 'POST',
+        body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
       });
 
       const existingTicket = await fastify.prisma.ticket.findFirst({
@@ -136,7 +138,6 @@ export async function checkGmailForOrg(org: any, fastify: any) {
         await fastify.prisma.message.create({
           data: { body: `Reply from ${fromName} <${fromEmail}>`, senderType: 'CUSTOMER', ticketId: existingTicket.id },
         });
-        console.log(`Reply added to ticket: ${existingTicket.subject}`);
         continue;
       }
 
@@ -151,15 +152,10 @@ export async function checkGmailForOrg(org: any, fastify: any) {
 
       const ticket = await fastify.prisma.ticket.create({
         data: {
-          subject,
-          description: `Email from ${fromName} <${fromEmail}>`,
-          status: 'OPEN',
-          priority: 'MEDIUM',
-          source: 'EMAIL',
-          emailThreadId: threadId,
-          emailMessageId: messageId,
-          organizationId: org.id,
-          customerId: customer.id,
+          subject, description: `Email from ${fromName} <${fromEmail}>`,
+          status: 'OPEN', priority: 'MEDIUM', source: 'EMAIL',
+          emailThreadId: threadId, emailMessageId: messageId,
+          organizationId: org.id, customerId: customer.id,
         },
       });
 
@@ -167,30 +163,12 @@ export async function checkGmailForOrg(org: any, fastify: any) {
         data: { body: `Email from ${fromName} <${fromEmail}>:\n\nSubject: ${subject}`, senderType: 'CUSTOMER', ticketId: ticket.id },
       });
 
-      console.log(`New ticket: ${subject} — org: ${org.name}`);
+      console.log(`New ticket: ${subject}`);
     }
   } catch (err: any) {
     console.error(`Gmail error:`, err.message);
+    throw err;
   }
 }
 
-export async function startGmailPoller(fastify: any) {
-  console.log('Starting Gmail poller...');
-  const poll = async () => {
-    try {
-      const orgs = await fastify.prisma.organization.findMany({
-        where: { gmailConnected: true, gmailAccessToken: { not: null } },
-        select: { id: true, name: true, gmailEmail: true, gmailAccessToken: true, gmailRefreshToken: true },
-      });
-      for (const org of orgs) {
-        await checkGmailForOrg(org, fastify);
-      }
-    } catch (err: any) {
-      console.error('Poller error:', err.message);
-    }
-  };
-  setTimeout(async () => {
-    await poll();
-    setInterval(poll, 60 * 1000);
-  }, 15000);
-}
+export async function startGmailPoller(fastify: any) {}
