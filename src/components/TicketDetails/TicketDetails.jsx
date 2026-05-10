@@ -36,11 +36,19 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
     setShowSummary(false);
     setReplyMode("reply");
     setTranslations({});
+    setReplyText("");
+
     getMessages(ticket.id)
       .then((data) => { setMessages(data); setLoading(false); })
-      .catch((err)  => { console.error(err); setLoading(false); });
-    setReplyText("");
+      .catch((err) => { console.error(err); setLoading(false); });
+
     inputRef.current?.focus();
+
+    const interval = setInterval(() => {
+      getMessages(ticket.id).then(setMessages).catch(console.error);
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, [ticket?.id]);
 
   useEffect(() => { scrollToBottom(); }, [messages]);
