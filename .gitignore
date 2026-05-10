@@ -25,3 +25,5 @@ yarn-error.log*
 .env
 backend/stormforge/node_modules/
 backend/stormforge/.env
+.vercel
+.env*.local

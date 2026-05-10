@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import "./Inbox.css";
-import { UilPlus, UilTimes } from "@iconscout/react-unicons";
+import { UilPlus, UilTimes, UilSearch } from "@iconscout/react-unicons";
 import { getCustomers, createTicket, aiDetectPriority } from "../../api";
 
 const statusColors = {
-  OPEN:    { bg: "#dcfce7", color: "#16a34a" },
-  PENDING: { bg: "#fef3c7", color: "#d97706" },
+  OPEN:    { bg: "#dbeafe", color: "#1d4ed8" },
+  PENDING: { bg: "#fef3c7", color: "#b45309" },
   CLOSED:  { bg: "#f3f4f6", color: "#6b7280" },
 };
 
@@ -42,13 +42,10 @@ const NewTicketModal = ({ onClose, onSave }) => {
     if (!form.description.trim()) { setError("Description is required."); return; }
     setSaving(true);
     try {
-      // AI auto-detect priority, fallback to selected
       let priority = form.priority;
       try {
         priority = await aiDetectPriority({ subject: form.subject, description: form.description });
-      } catch (e) {
-        // silently fallback
-      }
+      } catch (e) {}
 
       const ticket = await createTicket({
         customerId: form.customerId,
@@ -74,44 +71,44 @@ const NewTicketModal = ({ onClose, onSave }) => {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>New Ticket</h2>
-          <button className="modal-close" onClick={onClose}><UilTimes size="20" /></button>
+          <button className="modal-close" onClick={onClose}><UilTimes size="18" /></button>
         </div>
         <div className="modal-body">
           {error && <div className="modal-error">{error}</div>}
           <div className="form-group">
-            <label>Customer *</label>
+            <label>Customer</label>
             {loading ? (
-              <select disabled><option>Loading customers...</option></select>
+              <select disabled><option>Loading...</option></select>
             ) : (
               <select name="customerId" value={form.customerId} onChange={handleChange}>
-                <option value="">Select a customer...</option>
+                <option value="">Select a customer</option>
                 {customers.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name} {c.email ? `(${c.email})` : ""}</option>
+                  <option key={c.id} value={c.id}>{c.name}{c.email ? ` — ${c.email}` : ""}</option>
                 ))}
               </select>
             )}
           </div>
           <div className="form-group">
-            <label>Subject *</label>
+            <label>Subject</label>
             <input
               name="subject"
-              placeholder="What's the issue about?"
+              placeholder="What is the issue about?"
               value={form.subject}
               onChange={handleChange}
             />
           </div>
           <div className="form-group">
-            <label>Description *</label>
+            <label>Description</label>
             <textarea
               name="description"
-              placeholder="Describe the issue in detail..."
+              placeholder="Describe the issue in detail"
               value={form.description}
               onChange={handleChange}
               rows={4}
             />
           </div>
           <div className="form-group">
-            <label>Priority <span className="label-hint">(AI will auto-detect from description)</span></label>
+            <label>Priority <span className="label-hint">AI will auto-detect from description</span></label>
             <div className="priority-options">
               {["LOW", "MEDIUM", "HIGH"].map((p) => (
                 <button
@@ -119,16 +116,13 @@ const NewTicketModal = ({ onClose, onSave }) => {
                   className={`priority-option ${form.priority === p ? "selected" : ""}`}
                   style={{
                     borderColor: form.priority === p ? priorityDot[p] : "#e5e7eb",
-                    background: form.priority === p ? priorityDot[p] + "18" : "#fff",
+                    background: form.priority === p ? priorityDot[p] + "15" : "#fff",
                     color: form.priority === p ? priorityDot[p] : "#6b7280",
                   }}
                   onClick={() => setForm({ ...form, priority: p })}
                 >
-                  <span style={{
-                    width: 8, height: 8, borderRadius: "50%",
-                    background: priorityDot[p], display: "inline-block", marginRight: 6
-                  }} />
-                  {p}
+                  <span className="priority-dot" style={{ background: priorityDot[p] }} />
+                  {p.charAt(0) + p.slice(1).toLowerCase()}
                 </button>
               ))}
             </div>
@@ -137,7 +131,7 @@ const NewTicketModal = ({ onClose, onSave }) => {
         <div className="modal-footer">
           <button className="modal-cancel" onClick={onClose}>Cancel</button>
           <button className="modal-save" onClick={handleSubmit} disabled={saving}>
-            {saving ? "Analyzing & Creating..." : "Create Ticket"}
+            {saving ? "Creating..." : "Create Ticket"}
           </button>
         </div>
       </div>
@@ -165,6 +159,8 @@ const Inbox = ({ setActiveTicket, activeTicket, tickets = [], onTicketCreated })
     setActiveTicket(ticket);
   };
 
+  const countByStatus = (s) => tickets.filter((t) => t.status === s).length;
+
   return (
     <div className="Inbox">
       {showModal && (
@@ -175,13 +171,28 @@ const Inbox = ({ setActiveTicket, activeTicket, tickets = [], onTicketCreated })
       )}
 
       <div className="inbox-header">
-        <h2>Inbox</h2>
-        <div className="inbox-header-right">
+        <div className="inbox-header-left">
+          <h2>Inbox</h2>
           <span className="inbox-count">{tickets.length}</span>
-          <button className="inbox-new-btn" onClick={() => setShowModal(true)}>
-            <UilPlus size="16" />
-          </button>
         </div>
+        <button className="inbox-new-btn" onClick={() => setShowModal(true)} title="New ticket">
+          <UilPlus size="15" />
+        </button>
+      </div>
+
+      <div className="inbox-search">
+        <UilSearch size="14" color="#9ca3af" />
+        <input
+          type="text"
+          placeholder="Search tickets..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {search && (
+          <button className="inbox-search-clear" onClick={() => setSearch("")}>
+            <UilTimes size="13" />
+          </button>
+        )}
       </div>
 
       <div className="inbox-filters">
@@ -191,34 +202,34 @@ const Inbox = ({ setActiveTicket, activeTicket, tickets = [], onTicketCreated })
             className={`filter-tab ${filter === f ? "active" : ""}`}
             onClick={() => setFilter(f)}
           >
-            {f}
+            {f === "ALL" ? "All" : f.charAt(0) + f.slice(1).toLowerCase()}
+            {f !== "ALL" && (
+              <span className="filter-count">{countByStatus(f)}</span>
+            )}
           </button>
         ))}
       </div>
 
-      <div className="inbox-search">
-        <span className="inbox-search-icon">🔍</span>
-        <input
-          type="text"
-          placeholder="Search by name or subject..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {search && (
-          <button className="inbox-search-clear" onClick={() => setSearch("")}>×</button>
-        )}
-      </div>
-
       <div className="ticketsContainer">
         {tickets.length === 0 ? (
-          <div className="inbox-empty">Loading...</div>
+          <div className="inbox-empty">
+            <div className="inbox-empty-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
+                <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4m8-4v4" />
+              </svg>
+            </div>
+            <p>No tickets yet</p>
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="inbox-empty">No tickets found.</div>
+          <div className="inbox-empty"><p>No results found</p></div>
         ) : (
           filtered.map((ticket) => {
             const status = statusColors[ticket.status] || statusColors.OPEN;
             const dot = priorityDot[ticket.priority] || priorityDot.MEDIUM;
             const isActive = activeTicket?.id === ticket.id;
+            const initials = ticket.customer?.name
+              ? ticket.customer.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+              : "?";
 
             return (
               <div
@@ -227,7 +238,7 @@ const Inbox = ({ setActiveTicket, activeTicket, tickets = [], onTicketCreated })
                 onClick={() => setActiveTicket(ticket)}
               >
                 <div className="ticket-avatar">
-                  {ticket.customer?.name?.charAt(0) || "?"}
+                  {initials}
                 </div>
                 <div className="ticketMiddle">
                   <div className="ticket-top-row">
@@ -242,35 +253,10 @@ const Inbox = ({ setActiveTicket, activeTicket, tickets = [], onTicketCreated })
                   </div>
                   <span className="ticketSubject">{ticket.subject}</span>
                   <div className="ticket-bottom-row">
-                    <span style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      backgroundColor: status.bg,
-                      color: status.color,
-                      border: `1px solid ${status.color}44`,
-                      fontSize: "0.58rem",
-                      fontWeight: 700,
-                      padding: "2px 7px",
-                      borderRadius: "999px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                      whiteSpace: "nowrap",
-                      lineHeight: 1,
-                      flexShrink: 0,
-                    }}>
-                      {ticket.status}
+                    <span className="ticket-status-badge" style={{ background: status.bg, color: status.color }}>
+                      {ticket.status.charAt(0) + ticket.status.slice(1).toLowerCase()}
                     </span>
-                    <span
-                      style={{
-                        width: "6px",
-                        height: "6px",
-                        minWidth: "6px",
-                        borderRadius: "50%",
-                        backgroundColor: dot,
-                        flexShrink: 0,
-                      }}
-                      title={ticket.priority}
-                    />
+                    <span className="ticket-priority-dot" style={{ background: dot }} title={ticket.priority} />
                   </div>
                 </div>
               </div>
