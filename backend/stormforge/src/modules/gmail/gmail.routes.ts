@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 
-const REDIRECT_URI = 'https://appealing-reflection-production-7fbc.up.railway.app/api/gmail/callback';
+const REDIRECT_URI = 'https://agent-crm-backend.vercel.app/api/gmail/callback';
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 
@@ -54,15 +54,15 @@ export default async function gmailRoutes(fastify: FastifyInstance) {
     if (!code || !organizationId) return reply.status(400).send({ message: 'Missing code or state' });
 
     const tokens = await getTokens(code);
-    const userInfo = await getUserEmail(tokens.access_token);
+    const userInfo = await getUserEmail((tokens as any).access_token);
 
     await fastify.prisma.organization.update({
       where: { id: organizationId },
       data: {
-        gmailAccessToken: tokens.access_token,
-        gmailRefreshToken: tokens.refresh_token,
-        gmailTokenExpiry: tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null,
-        gmailEmail: userInfo.email,
+        gmailAccessToken: (tokens as any).access_token,
+        gmailRefreshToken: (tokens as any).refresh_token,
+        gmailTokenExpiry: (tokens as any).expires_in ? new Date(Date.now() + (tokens as any).expires_in * 1000) : null,
+        gmailEmail: (userInfo as any).email,
         gmailConnected: true,
       },
     });
@@ -101,17 +101,17 @@ export default async function gmailRoutes(fastify: FastifyInstance) {
 export async function checkGmailForOrg(org: any, fastify: any) {
   try {
     const listData = await gmailFetch(org.gmailAccessToken, '/messages?maxResults=5&q=is:unread+in:inbox');
-    const messages = listData.messages || [];
+    const messages = (listData as any).messages || [];
     console.log(`Gmail: ${messages.length} unread for ${org.gmailEmail}`);
 
     for (const msg of messages) {
       const full = await gmailFetch(org.gmailAccessToken, `/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Message-ID`);
 
-      const headers = full.payload?.headers || [];
+      const headers = (full as any).payload?.headers || [];
       const from = headers.find((h: any) => h.name === 'From')?.value || '';
       const subject = headers.find((h: any) => h.name === 'Subject')?.value || 'No Subject';
       const messageId = headers.find((h: any) => h.name === 'Message-ID')?.value || '';
-      const threadId = full.threadId || '';
+      const threadId = (full as any).threadId || '';
 
       const emailMatch = from.match(/<(.+)>/) || [null, from];
       const fromEmail = (emailMatch[1] || from).trim();

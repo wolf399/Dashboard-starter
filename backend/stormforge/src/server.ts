@@ -30,11 +30,8 @@ dotenv.config();
 
 export const build = async () => {
   const fastify = Fastify({
-    logger: isTest ? false : {
-      level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'development' ? 'info' : 'warn'),
-      transport: { target: 'pino-pretty', options: { colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' } },
-    },
-    disableRequestLogging: process.env.NODE_ENV === 'production',
+  logger: false,
+  disableRequestLogging: true,
   });
 
   await fastify.register(sensible);
@@ -89,3 +86,10 @@ const start = async () => {
 };
 
 if (isMain) start();
+
+// Vercel serverless export
+export default async function handler(req: any, res: any) {
+  const app = await build();
+  await app.ready();
+  app.server.emit('request', req, res);
+}

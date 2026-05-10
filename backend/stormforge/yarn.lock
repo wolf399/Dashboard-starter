@@ -308,7 +308,7 @@
   resolved "https://registry.yarnpkg.com/@pinojs/redact/-/redact-0.4.0.tgz#c3de060dd12640dcc838516aa2a6803cc7b2e9d6"
   integrity sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==
 
-"@prisma/client@6":
+"@prisma/client@6.19.2":
   version "6.19.2"
   resolved "https://registry.yarnpkg.com/@prisma/client/-/client-6.19.2.tgz#96cde2f9340a5d9a91a80b2e0733ede158aede5d"
   integrity sha512-gR2EMvfK/aTxsuooaDA32D8v+us/8AAet+C3J1cc04SW35FPdZYgLF+iN4NDLUgAaUGTKdAB0CYenu1TAgGdMg==

@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
-const REDIRECT_URI = 'https://appealing-reflection-production-7fbc.up.railway.app/api/gmail/callback';
+const REDIRECT_URI = 'https://agent-crm-backend.vercel.app/api/gmail/callback';
 
 export default async function emailRoutes(fastify: FastifyInstance) {
 
@@ -50,7 +50,7 @@ export default async function emailRoutes(fastify: FastifyInstance) {
       const { to, subject, text, ticketId } = request.body as any;
 
       const org = await fastify.prisma.organization.findUnique({ where: { id: user.organizationId } });
-      if (!org?.gmailConnected || !org?.gmailAccessToken) {
+      if (!(org as any)?.gmailConnected || !(org as any)?.gmailAccessToken) {
         return reply.status(400).send({ error: 'Gmail not connected. Please connect your Gmail in Settings.' });
       }
 
@@ -61,7 +61,7 @@ export default async function emailRoutes(fastify: FastifyInstance) {
         `To: ${to}`,
         `Subject: Re: ${subject}`,
         'Content-Type: text/html; charset=utf-8',
-        ...(ticket?.emailMessageId ? [`In-Reply-To: ${ticket.emailMessageId}`, `References: ${ticket.emailMessageId}`] : []),
+        ...((ticket as any)?.emailMessageId ? [`In-Reply-To: ${ticket.emailMessageId}`, `References: ${ticket.emailMessageId}`] : []),
         '',
         `<div style="font-family: sans-serif; max-width: 600px;">`,
         `<p>${text.replace(/\n/g, '<br/>')}</p>`,
@@ -74,7 +74,7 @@ export default async function emailRoutes(fastify: FastifyInstance) {
       const encodedEmail = Buffer.from(email).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
       const body: any = { raw: encodedEmail };
-      if (ticket?.emailThreadId) body.threadId = ticket.emailThreadId;
+      if ((ticket as any)?.emailThreadId) body.threadId = ticket.emailThreadId;
 
       const res = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/send`, {
         method: 'POST',

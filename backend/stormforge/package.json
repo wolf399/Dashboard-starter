@@ -16,7 +16,7 @@
     "@fastify/sensible": "^6.0.4",
     "@fastify/swagger": "^9.6.1",
     "@fastify/swagger-ui": "^5.2.3",
-    "@prisma/client": "6",
+    "@prisma/client": "6.19.2",
     "@sendgrid/mail": "^8.1.6",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^24.10.1",
@@ -38,7 +38,8 @@
     "build": "npx prisma generate",
     "start": "npx prisma db push && npx tsx src/server.ts",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "postinstall": "prisma generate"
   },
   "devDependencies": {
     "@types/nodemailer": "^7.0.11"
