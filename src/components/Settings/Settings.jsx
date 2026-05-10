@@ -362,7 +362,7 @@ const Settings = ({ addToast }) => {
             <div className="settings-card">
               <div className="settings-card-header">
                 <h2>Preferences</h2>
-                <p>Customize your ShopsCRM experience</p>
+                <p>Customize your Agent CRM experience</p>
               </div>
               <div className="preferences-list">
                 {[

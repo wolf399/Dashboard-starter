@@ -100,7 +100,10 @@ export default async function gmailRoutes(fastify: FastifyInstance) {
 
 export async function checkGmailForOrg(org: any, fastify: any) {
   try {
-    const listData = await gmailFetch(org.gmailAccessToken, '/messages?maxResults=5&q=is:unread+in:inbox');
+    const afterDate = org.gmailTokenExpiry 
+    ? Math.floor(new Date(org.gmailTokenExpiry).getTime() / 1000) - (90 * 24 * 60 * 60)
+    : Math.floor(Date.now() / 1000) - (24 * 60 * 60);
+    const listData = await gmailFetch(org.gmailAccessToken, `/messages?maxResults=5&q=is:unread+in:inbox+after:${afterDate}`);
     const messages = (listData as any).messages || [];
     console.log(`Gmail: ${messages.length} unread for ${org.gmailEmail}`);
 

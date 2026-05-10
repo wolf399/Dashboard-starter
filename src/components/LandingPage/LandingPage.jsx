@@ -69,7 +69,7 @@ const LandingPage = ({ onEnterApp }) => {
   ];
 
   const testimonials = [
-    { quote: "ShopsCRM cut our response time by 60%. Our customers can't believe how fast we reply now.", name: "Sarah Chen", role: "Head of Support, Flowmint", avatar: "SC", color: "#16a34a" },
+    { quote: "Agent CRM cut our response time by 60%. Our customers can't believe how fast we reply now.", name: "Sarah Chen", role: "Head of Support, Flowmint", avatar: "SC", color: "#16a34a" },
     { quote: "Finally a CRM that doesn't feel like it was built in 2005. The UI is gorgeous and actually intuitive.", name: "Marcus Webb", role: "Founder, Stacklabs", avatar: "MW", color: "#3b82f6" },
     { quote: "The analytics alone are worth it. I finally know exactly where our support team is struggling.", name: "Priya Nair", role: "Customer Success, Orbio", avatar: "PN", color: "#a855f7" },
   ];
@@ -124,7 +124,7 @@ const LandingPage = ({ onEnterApp }) => {
           <span className="hero-highlight">magic</span> to your customers
         </h1>
         <p className="hero-sub">
-          ShopsCRM brings all your customer conversations, tasks, and analytics into one beautiful workspace. Respond faster, resolve smarter, retain longer.
+          Agent CRM brings all your customer conversations, tasks, and analytics into one beautiful workspace. Respond faster, resolve smarter, retain longer.
         </p>
         <div className="hero-ctas">
           <button className="hero-cta-primary" onClick={() => setMode("register")}>Start for free — no credit card</button>
@@ -136,7 +136,7 @@ const LandingPage = ({ onEnterApp }) => {
               <div key={i} className="hero-avatar" style={{ zIndex: 5 - i, background: ["#16a34a","#3b82f6","#a855f7","#f97316","#ef4444"][i] }}>{l}</div>
             ))}
           </div>
-          <span>Join <strong>2,000+</strong> teams already using ShopsCRM</span>
+          <span>Join <strong>2,000+</strong> teams already using Agent CRM</span>
         </div>
         <div className="hero-preview">
           <div className="preview-bar"><span /><span /><span /></div>
@@ -195,7 +195,7 @@ const LandingPage = ({ onEnterApp }) => {
       <section className="features" id="features">
         <div className="section-label">Features</div>
         <h2 className="section-title">Everything your support team needs</h2>
-        <p className="section-sub">From inbox to analytics — ShopsCRM has every tool to make your customers happy and your team efficient.</p>
+        <p className="section-sub">From inbox to analytics — Agent CRM has every tool to make your customers happy and your team efficient.</p>
         <div className="features-grid">
           {features.map((f, i) => (
             <div key={i} className="feature-card" style={{ background: f.color, borderColor: f.accent + "33" }}>
@@ -258,7 +258,7 @@ const LandingPage = ({ onEnterApp }) => {
       {/* Final CTA */}
       <section className="final-cta">
         <h2>Ready to delight your customers?</h2>
-        <p>Join 2,000+ teams using ShopsCRM to deliver world-class support.</p>
+        <p>Join 2,000+ teams using Agent CRM to deliver world-class support.</p>
         <button className="hero-cta-primary" onClick={() => setMode("register")}>Get started for free →</button>
       </section>
 
@@ -268,7 +268,7 @@ const LandingPage = ({ onEnterApp }) => {
           <div className="nav-logo-icon">S</div>
           <span>Shops<strong>CRM</strong></span>
         </div>
-        <p>© 2026 ShopsCRM. Built for modern support teams.</p>
+        <p>© 2026 Agent CRM. Built for modern support teams.</p>
       </footer>
 
       {/* Auth Modal */}
