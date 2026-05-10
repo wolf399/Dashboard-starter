@@ -19,6 +19,7 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
   const [assigning, setAssigning]             = useState(false);
   const [translating, setTranslating]         = useState(null);
   const [translations, setTranslations]       = useState({});
+  const [expandedMessages, setExpandedMessages] = useState({});
   const threadEndRef = useRef(null);
   const inputRef     = useRef(null);
 
@@ -37,9 +38,17 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
     setReplyMode("reply");
     setTranslations({});
     setReplyText("");
+    setExpandedMessages({});
 
     getMessages(ticket.id)
-      .then((data) => { setMessages(data); setLoading(false); })
+      .then((data) => {
+        setMessages(data);
+        setLoading(false);
+        // Auto-expand last message
+        if (data.length > 0) {
+          setExpandedMessages({ [data[data.length - 1].id]: true });
+        }
+      })
       .catch((err) => { console.error(err); setLoading(false); });
 
     inputRef.current?.focus();
@@ -68,6 +77,26 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
   const fmtTime = (iso) =>
     new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+  const fmtDate = (iso) =>
+    new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  const isHtml = (str) => /<[a-z][\s\S]*>/i.test(str);
+
+  const stripHtml = (html) => {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+  };
+
+  const getPreview = (body) => {
+    const text = isHtml(body) ? stripHtml(body) : body;
+    return text.replace(/\s+/g, " ").trim().slice(0, 120);
+  };
+
+  const toggleExpand = (id) => {
+    setExpandedMessages((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   /* ── Actions ── */
   const handleAssign = async (agentId) => {
     setAssigning(true);
@@ -79,7 +108,7 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
       setMessages((prev) => [...prev, {
         id: `system-${Date.now()}`,
         senderType: "SYSTEM",
-        body: agentId ? `Ticket assigned to ${agent?.name || "agent"}` : "Ticket unassigned",
+        body: agentId ? `Assigned to ${agent?.name || "agent"}` : "Ticket unassigned",
         createdAt: new Date().toISOString(),
       }]);
       addToast(agentId ? `Assigned to ${agent?.name}` : "Ticket unassigned", "success");
@@ -136,10 +165,11 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
       const senderType = replyMode === "note" ? "NOTE" : "AGENT";
       const newMessage = await sendMessage(ticket.id, replyText, senderType);
       setMessages((prev) => [...prev, newMessage]);
+      setExpandedMessages((prev) => ({ ...prev, [newMessage.id]: true }));
       if (replyMode === "reply" && ticket.customer?.email) {
         try {
           await sendEmail({ to: ticket.customer.email, subject: ticket.subject, text: replyText, ticketId: ticket.id });
-          addToast("Reply sent & email delivered ✉️", "success");
+          addToast("Reply sent and email delivered", "success");
         } catch {
           addToast("Reply saved but email failed", "info");
         }
@@ -158,7 +188,7 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
       setMessages((prev) => [...prev, {
         id: `system-${Date.now()}`,
         senderType: "SYSTEM",
-        body: `Ticket ${newStatus === "CLOSED" ? "closed" : newStatus === "OPEN" ? "reopened" : "marked as pending"} by Support Team`,
+        body: `Ticket ${newStatus === "CLOSED" ? "closed" : newStatus === "OPEN" ? "reopened" : "marked as pending"}`,
         createdAt: new Date().toISOString(),
       }]);
       setCurrentStatus(newStatus);
@@ -170,14 +200,14 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
 
   /* ── Badge configs ── */
   const priorityColors = {
-    HIGH:   { bg: "#feeaea", color: "#b91c1c" },
-    MEDIUM: { bg: "#fef6e4", color: "#8a5e00" },
-    LOW:    { bg: "#e8f4e8", color: "#1a6a1a" },
+    HIGH:   { bg: "#fef2f2", color: "#b91c1c" },
+    MEDIUM: { bg: "#fefce8", color: "#854d0e" },
+    LOW:    { bg: "#f0fdf4", color: "#15803d" },
   };
   const statusColors = {
-    OPEN:    { bg: "#e8f4e8", color: "#1a6a1a" },
-    PENDING: { bg: "#fef6e4", color: "#8a5e00" },
-    CLOSED:  { bg: "#f0f4f0", color: "#5a745a" },
+    OPEN:    { bg: "#dbeafe", color: "#1d4ed8" },
+    PENDING: { bg: "#fefce8", color: "#854d0e" },
+    CLOSED:  { bg: "#f3f4f6", color: "#6b7280" },
   };
 
   const priority = priorityColors[ticket.priority] || priorityColors.MEDIUM;
@@ -200,30 +230,28 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
           <h1>{ticket.subject}</h1>
           <div className="header-badges">
             <span className="status-badge" style={{ background: status.bg, color: status.color }}>
-              {currentStatus}
+              {currentStatus.charAt(0) + currentStatus.slice(1).toLowerCase()}
             </span>
             <span className="status-badge" style={{ background: priority.bg, color: priority.color }}>
-              {ticket.priority}
+              {ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}
             </span>
             <button
               className={`status-action-btn ${currentStatus.toLowerCase()}`}
               onClick={() => handleStatusChange(action.next)}
               disabled={updatingStatus}
             >
-              {updatingStatus ? "Updating…" : action.label}
+              {action.label}
             </button>
           </div>
         </div>
 
         <div className="meta-info">
           <span className="customer-tag">{ticket.customer?.name || "Unknown"}</span>
-          <span className="separator">•</span>
-          <span className="meta-date">
-            {new Date(ticket.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-          </span>
-          <span className="separator">•</span>
+          <span className="separator">·</span>
+          <span className="meta-date">{fmtDate(ticket.createdAt)}</span>
+          <span className="separator">·</span>
           <div className="assign-wrapper">
-            <span className="assign-label">Assign:</span>
+            <span className="assign-label">Assign</span>
             <select
               className="assign-select"
               value={assignedAgentId}
@@ -239,13 +267,13 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
               </div>
             )}
           </div>
-          <span className="separator">•</span>
+          <span className="separator">·</span>
           <button
             className="summary-btn"
             onClick={handleGetSummary}
             disabled={loadingSummary || !messages.length}
           >
-            {loadingSummary ? "Summarizing…" : "✨ AI Summary"}
+            {loadingSummary ? "Summarizing..." : "AI Summary"}
           </button>
         </div>
       </div>
@@ -254,21 +282,21 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
       {showSummary && (
         <div className="ai-summary">
           <div className="ai-summary-header">
-            <span>✨ AI Summary</span>
+            <span>AI Summary</span>
             <button onClick={() => setShowSummary(false)}>×</button>
           </div>
-          <p>{loadingSummary ? "Generating summary…" : summary}</p>
+          <p>{loadingSummary ? "Generating summary..." : summary}</p>
         </div>
       )}
 
       {/* ── Conversation thread ── */}
       <div className="conversation-thread">
         {loading ? (
-          <div className="loading-messages">Loading messages…</div>
+          <div className="loading-messages">Loading...</div>
         ) : messages.length === 0 ? (
           <div className="loading-messages">No messages yet.</div>
         ) : (
-          messages.map((msg) => {
+          messages.map((msg, index) => {
 
             /* System event */
             if (msg.senderType === "SYSTEM") return (
@@ -282,7 +310,7 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
             if (msg.senderType === "NOTE") return (
               <div key={msg.id} className="note-card">
                 <div className="note-header">
-                  <span className="note-icon">🔒</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                   <span className="note-sender">Internal Note</span>
                   <span className="note-time">{fmtTime(msg.createdAt)}</span>
                 </div>
@@ -290,48 +318,80 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
               </div>
             );
 
-            /* Regular message — Gmail card style */
+            /* Regular message — HubSpot email thread style */
             const isAgent     = msg.senderType === "AGENT";
             const translation = translations[msg.id];
             const senderName  = isAgent ? "Support Team" : (ticket.customer?.name || "Customer");
             const senderEmail = isAgent ? null : ticket.customer?.email;
+            const isExpanded  = expandedMessages[msg.id] ?? (index === messages.length - 1);
+            const bodyIsHtml  = isHtml(msg.body);
+            const preview     = getPreview(msg.body);
 
             return (
-              <div key={msg.id} className={`message-card ${isAgent ? "agent" : "customer"}`}>
-                <div className="card-header">
-                  <div className="sender-avatar">
+              <div key={msg.id} className={`message-card ${isAgent ? "agent" : "customer"} ${isExpanded ? "expanded" : "collapsed"}`}>
+                {/* Always visible header */}
+                <div className="card-header" onClick={() => toggleExpand(msg.id)}>
+                  <div className={`sender-avatar ${isAgent ? "agent-avatar" : "customer-avatar"}`}>
                     {avatarInitials(senderName)}
                   </div>
 
                   <div className="sender-info">
-                    <span className="sender-name">{senderName}</span>
-                    {senderEmail && (
-                      <span className="sender-email">{senderEmail}</span>
+                    <div className="sender-top">
+                      <span className="sender-name">{senderName}</span>
+                      {senderEmail && <span className="sender-email">{senderEmail}</span>}
+                    </div>
+                    {!isExpanded && (
+                      <span className="message-preview">{preview}</span>
                     )}
                   </div>
 
                   <div className="card-header-right">
                     <span className="timestamp">{fmtTime(msg.createdAt)}</span>
-                    <button
-                      className="translate-btn"
-                      onClick={() => handleTranslate(msg.id, msg.body)}
-                      disabled={translating === msg.id}
-                      title="Translate"
-                    >
-                      {translating === msg.id ? "…" : translation ? "🌐 Original" : "🌐"}
-                    </button>
+                    {!isExpanded && (
+                      <svg className="expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    )}
+                    {isExpanded && (
+                      <button
+                        className="translate-btn"
+                        onClick={(e) => { e.stopPropagation(); handleTranslate(msg.id, bodyIsHtml ? stripHtml(msg.body) : msg.body); }}
+                        disabled={translating === msg.id}
+                        title="Translate"
+                      >
+                        {translating === msg.id ? "..." : translation ? "Original" : "Translate"}
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                <div className="card-body">
-                  <p>{msg.body}</p>
-                  {translation && (
-                    <div className="translation-box">
-                      <span className="translation-lang">Translated from {translation.language}</span>
-                      <p>{translation.translation}</p>
-                    </div>
-                  )}
-                </div>
+                {/* Expanded body */}
+                {isExpanded && (
+                  <div className="card-body">
+                    {bodyIsHtml ? (
+                      <iframe
+                        srcDoc={msg.body}
+                        className="email-iframe"
+                        sandbox="allow-same-origin"
+                        title="Email content"
+                        onLoad={(e) => {
+                          try {
+                            const h = e.target.contentDocument?.body?.scrollHeight;
+                            if (h) e.target.style.height = Math.min(h + 20, 600) + "px";
+                          } catch {}
+                        }}
+                      />
+                    ) : (
+                      <p className="message-text">{msg.body}</p>
+                    )}
+                    {translation && (
+                      <div className="translation-box">
+                        <span className="translation-lang">Translated from {translation.language}</span>
+                        <p>{translation.translation}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })
@@ -343,7 +403,7 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
       {suggestions.length > 0 && (
         <div className="ai-suggestions">
           <div className="ai-suggestions-header">
-            <span>✨ AI Suggestions — click to use</span>
+            <span>Suggested Replies</span>
             <button onClick={() => setSuggestions([])}>×</button>
           </div>
           <div className="suggestions-list">
@@ -367,13 +427,13 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
             className={`reply-mode-tab ${replyMode === "reply" ? "active-reply" : ""}`}
             onClick={() => setReplyMode("reply")}
           >
-            💬 Reply
+            Reply
           </button>
           <button
             className={`reply-mode-tab ${replyMode === "note" ? "active-note" : ""}`}
             onClick={() => setReplyMode("note")}
           >
-            🔒 Internal Note
+            Internal Note
           </button>
         </div>
 
@@ -381,8 +441,8 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
           <textarea
             ref={inputRef}
             placeholder={replyMode === "note"
-              ? "Write an internal note — only your team can see this…"
-              : "Type your response to the customer…"}
+              ? "Write an internal note — only your team can see this"
+              : "Type your response to the customer..."}
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             onKeyDown={(e) => {
@@ -392,9 +452,14 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
           <div className="editor-toolbar">
             <div className="toolbar-left">
               <div className="formatting">
-                <span title="Bold">B</span>
-                <span title="Italic" style={{ fontStyle: "italic" }}>I</span>
-                <span title="Link">🔗</span>
+                <span title="Bold"><strong>B</strong></span>
+                <span title="Italic"><em>I</em></span>
+                <span title="Link">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+                  </svg>
+                </span>
               </div>
               {replyMode === "reply" ? (
                 <button
@@ -402,10 +467,10 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
                   onClick={handleGetSuggestions}
                   disabled={loadingSuggestions || !messages.length}
                 >
-                  {loadingSuggestions ? "Thinking…" : "✨ Suggest replies"}
+                  {loadingSuggestions ? "Thinking..." : "Suggest replies"}
                 </button>
               ) : (
-                <span className="note-hint">🔒 Only visible to your team</span>
+                <span className="note-hint">Only visible to your team</span>
               )}
             </div>
             <button
