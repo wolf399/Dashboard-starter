@@ -62,6 +62,11 @@ const MainDash = ({
             onTicketUpdate(ticket);
             setActiveTicket(ticket);
           }}
+          onTicketsUpdated={(ids, newStatus) => {
+            ids.forEach((id) => {
+              onTicketUpdate({ id, status: newStatus });
+            });
+          }}
         />
         <div className="detailsWrapper">
           {activeTicket ? (

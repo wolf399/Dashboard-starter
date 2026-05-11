@@ -523,3 +523,99 @@ button.filter-tab:not(.active) .filter-count {
 
 .modal-save:hover { background: #246424; }
 .modal-save:disabled { opacity: 0.45; cursor: not-allowed; }
+/* ── Add these to the bottom of your Inbox.css ── */
+
+.bulk-checkbox {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  accent-color: #2d7a2d;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.select-all-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 4px;
+  flex-shrink: 0;
+}
+
+.select-all-label {
+  font-size: 0.7rem;
+  color: #7a987a;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ticketRow.selected {
+  background: #eef7ee;
+}
+
+.ticketRow {
+  gap: 8px;
+}
+
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  background: #1a5a1a;
+  flex-shrink: 0;
+}
+
+.bulk-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bulk-btn {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.bulk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.bulk-pending {
+  background: #fef6e4;
+  color: #8a5e00;
+}
+
+.bulk-pending:hover { background: #fdebc5; }
+
+.bulk-close {
+  background: #fff;
+  color: #1a5a1a;
+}
+
+.bulk-close:hover { background: #f0f7f0; }
+
+.bulk-clear {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.bulk-clear:hover { background: rgba(255,255,255,0.25); }

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./Inbox.css";
 import { UilPlus, UilTimes, UilSearch } from "@iconscout/react-unicons";
-import { getCustomers, createTicket, aiDetectPriority } from "../../api";
+import { getCustomers, createTicket, aiDetectPriority, updateTicket } from "../../api";
 
 const statusConfig = {
   OPEN:    { label: "Open",    className: "status-open" },
@@ -161,10 +161,12 @@ const NewTicketModal = ({ onClose, onSave }) => {
   );
 };
 
-const Inbox = ({ setActiveTicket, activeTicket, tickets = [], onTicketCreated }) => {
+const Inbox = ({ setActiveTicket, activeTicket, tickets = [], onTicketCreated, onTicketsUpdated }) => {
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [selected, setSelected] = useState(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const filtered = tickets
     .filter((t) => filter === "ALL" || t.status === filter)
@@ -182,6 +184,41 @@ const Inbox = ({ setActiveTicket, activeTicket, tickets = [], onTicketCreated })
   };
 
   const countByStatus = (s) => tickets.filter((t) => t.status === s).length;
+
+  const toggleSelect = (e, id) => {
+    e.stopPropagation();
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map((t) => t.id)));
+    }
+  };
+
+  const clearSelection = () => setSelected(new Set());
+
+  const handleBulkUpdate = async (newStatus) => {
+    if (!selected.size) return;
+    setBulkLoading(true);
+    try {
+      await Promise.all([...selected].map((id) => updateTicket(id, { status: newStatus })));
+      if (onTicketsUpdated) onTicketsUpdated([...selected], newStatus);
+      clearSelection();
+    } catch (err) {
+      console.error("Bulk update failed:", err);
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const allFilteredSelected = filtered.length > 0 && selected.size === filtered.length;
 
   return (
     <div className="Inbox">
@@ -241,6 +278,32 @@ const Inbox = ({ setActiveTicket, activeTicket, tickets = [], onTicketCreated })
         ))}
       </div>
 
+      {/* Bulk action bar */}
+      {selected.size > 0 && (
+        <div className="bulk-bar">
+          <span className="bulk-count">{selected.size} selected</span>
+          <div className="bulk-actions">
+            <button
+              className="bulk-btn bulk-pending"
+              onClick={() => handleBulkUpdate("PENDING")}
+              disabled={bulkLoading}
+            >
+              {bulkLoading ? "…" : "Mark Pending"}
+            </button>
+            <button
+              className="bulk-btn bulk-close"
+              onClick={() => handleBulkUpdate("CLOSED")}
+              disabled={bulkLoading}
+            >
+              {bulkLoading ? "…" : "Close All"}
+            </button>
+            <button className="bulk-clear" onClick={clearSelection} aria-label="Clear selection">
+              <UilTimes size="13" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Ticket list */}
       <div className="ticketsContainer">
         {tickets.length === 0 ? (
@@ -255,59 +318,79 @@ const Inbox = ({ setActiveTicket, activeTicket, tickets = [], onTicketCreated })
         ) : filtered.length === 0 ? (
           <div className="inbox-empty"><p>No results found</p></div>
         ) : (
-          filtered.map((ticket) => {
-            const statusCfg = statusConfig[ticket.status] || statusConfig.OPEN;
-            const dot = priorityDot[ticket.priority] || priorityDot.MEDIUM;
-            const isActive = activeTicket?.id === ticket.id;
-            const name = ticket.customer?.name || "Unknown";
-            const initials = name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase()
-              .slice(0, 2);
-            const avatarColor = getAvatarColor(name);
-
-            return (
-              <div
-                key={ticket.id}
-                className={`ticketRow ${isActive ? "active" : ""}`}
-                onClick={() => setActiveTicket(ticket)}
-              >
-                <div
-                  className="ticket-avatar"
-                  style={{ background: avatarColor }}
-                >
-                  {initials}
-                </div>
-
-                <div className="ticketMiddle">
-                  <div className="ticket-top-row">
-                    <span className="ticketCustomer">{name}</span>
-                    <span className="ticketTime">
-                      {new Date(ticket.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-
-                  <span className="ticketSubject">{ticket.subject}</span>
-
-                  <div className="ticket-bottom-row">
-                    <span className={`ticket-status-badge ${statusCfg.className}`}>
-                      {statusCfg.label}
-                    </span>
-                    <span
-                      className="ticket-priority-dot"
-                      style={{ background: dot }}
-                      title={ticket.priority}
-                    />
-                  </div>
-                </div>
+          <>
+            {filtered.length > 1 && (
+              <div className="select-all-row">
+                <input
+                  type="checkbox"
+                  checked={allFilteredSelected}
+                  onChange={toggleSelectAll}
+                  className="bulk-checkbox"
+                />
+                <span className="select-all-label">
+                  {allFilteredSelected ? "Deselect all" : "Select all"}
+                </span>
               </div>
-            );
-          })
+            )}
+
+            {filtered.map((ticket) => {
+              const statusCfg = statusConfig[ticket.status] || statusConfig.OPEN;
+              const dot = priorityDot[ticket.priority] || priorityDot.MEDIUM;
+              const isActive = activeTicket?.id === ticket.id;
+              const isSelected = selected.has(ticket.id);
+              const name = ticket.customer?.name || "Unknown";
+              const initials = name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2);
+              const avatarColor = getAvatarColor(name);
+
+              return (
+                <div
+                  key={ticket.id}
+                  className={`ticketRow ${isActive ? "active" : ""} ${isSelected ? "selected" : ""}`}
+                  onClick={() => setActiveTicket(ticket)}
+                >
+                  <input
+                    type="checkbox"
+                    className="bulk-checkbox"
+                    checked={isSelected}
+                    onChange={(e) => toggleSelect(e, ticket.id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+
+                  <div className="ticket-avatar" style={{ background: avatarColor }}>
+                    {initials}
+                  </div>
+
+                  <div className="ticketMiddle">
+                    <div className="ticket-top-row">
+                      <span className="ticketCustomer">{name}</span>
+                      <span className="ticketTime">
+                        {new Date(ticket.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    <span className="ticketSubject">{ticket.subject}</span>
+                    <div className="ticket-bottom-row">
+                      <span className={`ticket-status-badge ${statusCfg.className}`}>
+                        {statusCfg.label}
+                      </span>
+                      <span
+                        className="ticket-priority-dot"
+                        style={{ background: dot }}
+                        title={ticket.priority}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
     </div>
