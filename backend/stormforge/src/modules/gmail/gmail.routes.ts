@@ -52,7 +52,7 @@ const gmailFetch = async (accessToken: string, path: string, options: any = {}) 
   return res.json();
 };
 
-// ── Extract plain text body from Gmail payload ──
+// ── Extract HTML body from Gmail payload (HTML preferred for image rendering) ──
 const extractEmailBody = (payload: any): string => {
   if (!payload) return '';
 
@@ -61,11 +61,11 @@ const extractEmailBody = (payload: any): string => {
     return Buffer.from(payload.body.data, 'base64url').toString('utf-8');
   }
 
-  // Multipart — look for text/plain first, then text/html
+  // Multipart — prioritize HTML so images and formatting render correctly
   if (payload.parts && Array.isArray(payload.parts)) {
-    // 1. Try text/plain
+    // 1. Try text/html first — preserves images, logos, formatting
     for (const part of payload.parts) {
-      if (part.mimeType === 'text/plain' && part.body?.data) {
+      if (part.mimeType === 'text/html' && part.body?.data) {
         return Buffer.from(part.body.data, 'base64url').toString('utf-8');
       }
     }
@@ -76,11 +76,10 @@ const extractEmailBody = (payload: any): string => {
         if (nested) return nested;
       }
     }
-    // 3. Fallback to text/html, strip tags
+    // 3. Fallback to text/plain
     for (const part of payload.parts) {
-      if (part.mimeType === 'text/html' && part.body?.data) {
-        const html = Buffer.from(part.body.data, 'base64url').toString('utf-8');
-        return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (part.mimeType === 'text/plain' && part.body?.data) {
+        return Buffer.from(part.body.data, 'base64url').toString('utf-8');
       }
     }
   }
@@ -167,7 +166,10 @@ export async function checkGmailForOrg(org: any, fastify: any) {
 
     for (const msg of messages) {
       // ── Use format=full to get the actual email body ──
-      const full = await gmailFetch(org.gmailAccessToken, `/messages/${msg.id}?format=full`);
+      const full = await gmailFetch(
+        org.gmailAccessToken,
+        `/messages/${msg.id}?format=full`
+      );
 
       const headers = (full as any).payload?.headers || [];
       const from      = headers.find((h: any) => h.name === 'From')?.value || '';
