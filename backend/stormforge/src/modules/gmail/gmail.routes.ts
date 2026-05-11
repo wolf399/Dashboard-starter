@@ -167,10 +167,7 @@ export async function checkGmailForOrg(org: any, fastify: any) {
 
     for (const msg of messages) {
       // ── Use format=full to get the actual email body ──
-      const full = await gmailFetch(
-        org.gmailAccessToken,
-        `/messages/${msg.id}?format=full`
-      );
+      const full = await gmailFetch(org.gmailAccessToken, `/messages/${msg.id}?format=full`);
 
       const headers = (full as any).payload?.headers || [];
       const from      = headers.find((h: any) => h.name === 'From')?.value || '';

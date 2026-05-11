@@ -1,7 +1,36 @@
 import { ImapFlow } from 'imapflow';
 import { PrismaClient } from '@prisma/client';
+import { simpleParser } from 'mailparser';
 
 const prisma = new PrismaClient();
+
+const getImapEmailBody = async (source: Buffer): Promise<string> => {
+  try {
+    const parsed = await simpleParser(source);
+    let html = parsed.html || parsed.textAsHtml || parsed.text || '';
+
+    if (parsed.attachments && parsed.attachments.length > 0) {
+      for (const attachment of parsed.attachments) {
+        if (attachment.cid) {
+          // Strip angle brackets AND escape special regex chars (dots, plus, etc.)
+          const cid = attachment.cid
+            .replace(/[<>]/g, '')
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const base64 = attachment.content.toString('base64');
+          const mime = attachment.contentType;
+          html = html.replace(
+            new RegExp(`cid:${cid}`, 'gi'),
+            `data:${mime};base64,${base64}`
+          );
+        }
+      }
+    }
+
+    return html;
+  } catch {
+    return source.toString('utf-8');
+  }
+};
 
 export async function checkImapForOrg(org: any) {
   const client = new ImapFlow({
@@ -20,9 +49,6 @@ export async function checkImapForOrg(org: any) {
     const lock = await client.getMailboxLock('INBOX');
 
     try {
-      // Only fetch emails since last sync
-      // On first run, only look at emails from the last 5 minutes
-      // This prevents importing entire inbox history
       const since = org.lastImapSync
         ? new Date(org.lastImapSync)
         : new Date(Date.now() - 5 * 60 * 1000);
@@ -30,29 +56,25 @@ export async function checkImapForOrg(org: any) {
       const messages = [];
       for await (const msg of client.fetch(
         { seen: false, since },
-        { envelope: true, uid: true }
+        { envelope: true, uid: true, source: true }
       )) {
         messages.push(msg);
       }
 
       for (const msg of messages) {
         const fromEmail = msg.envelope.from?.[0]?.address || '';
-        const fromName = msg.envelope.from?.[0]?.name || fromEmail;
-        const subject = msg.envelope.subject || 'No Subject';
+        const fromName  = msg.envelope.from?.[0]?.name || fromEmail;
+        const subject   = msg.envelope.subject || 'No Subject';
 
         if (!fromEmail) continue;
-
-        // Skip emails from own account
         if (fromEmail.toLowerCase() === org.imapEmail.toLowerCase()) continue;
 
-        // Mark as seen immediately to prevent reimporting
         try {
           await client.messageFlagsAdd({ uid: msg.uid }, ['\\Seen'], { uid: true });
         } catch (flagErr) {
           console.warn('Could not mark email as seen');
         }
 
-        // Find or create customer
         let customer = await prisma.customer.findFirst({
           where: { email: fromEmail, organizationId: org.id },
         });
@@ -68,7 +90,6 @@ export async function checkImapForOrg(org: any) {
           });
         }
 
-        // Avoid duplicate tickets
         const existing = await prisma.ticket.findFirst({
           where: {
             organizationId: org.id,
@@ -81,7 +102,6 @@ export async function checkImapForOrg(org: any) {
 
         if (existing) continue;
 
-        // Create ticket
         const ticket = await prisma.ticket.create({
           data: {
             subject,
@@ -94,10 +114,13 @@ export async function checkImapForOrg(org: any) {
           },
         });
 
-        // Create message
+        const body = msg.source
+          ? await getImapEmailBody(msg.source)
+          : `Email from ${fromName} <${fromEmail}>:\n\nSubject: ${subject}`;
+
         await prisma.message.create({
           data: {
-            body: `Email from ${fromName} <${fromEmail}>:\n\nSubject: ${subject}`,
+            body,
             senderType: 'CUSTOMER',
             ticketId: ticket.id,
           },
@@ -106,7 +129,6 @@ export async function checkImapForOrg(org: any) {
         console.log(`New ticket from email: ${subject} — org: ${org.name}`);
       }
 
-      // Update last sync time
       await prisma.organization.update({
         where: { id: org.id },
         data: { lastImapSync: new Date() },
