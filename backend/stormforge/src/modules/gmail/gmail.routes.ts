@@ -52,16 +52,14 @@ const gmailFetch = async (accessToken: string, path: string, options: any = {}) 
   return res.json();
 };
 
-// ── Extract HTML body from Gmail payload (HTML preferred for image rendering) ──
+// ── Extract HTML body from Gmail payload ──
 const extractEmailBody = (payload: any): string => {
   if (!payload) return '';
 
-  // Direct body data (simple emails)
   if (payload.body?.data) {
     return Buffer.from(payload.body.data, 'base64url').toString('utf-8');
   }
 
-  // Multipart — prioritize HTML so images and formatting render correctly
   if (payload.parts && Array.isArray(payload.parts)) {
     // 1. Try text/html first — preserves images, logos, formatting
     for (const part of payload.parts) {
@@ -69,7 +67,7 @@ const extractEmailBody = (payload: any): string => {
         return Buffer.from(part.body.data, 'base64url').toString('utf-8');
       }
     }
-    // 2. Try nested multipart (e.g. multipart/alternative inside multipart/mixed)
+    // 2. Try nested multipart
     for (const part of payload.parts) {
       if (part.mimeType?.startsWith('multipart/') && part.parts) {
         const nested = extractEmailBody(part);
@@ -85,6 +83,38 @@ const extractEmailBody = (payload: any): string => {
   }
 
   return '';
+};
+
+// ── Replace CID inline image references with base64 data URIs ──
+const extractEmailBodyWithCid = (payload: any): string => {
+  const html = extractEmailBody(payload);
+  if (!html) return '';
+
+  const replaceCids = (parts: any[], current: string): string => {
+    let result = current;
+    for (const part of parts || []) {
+      if (part.headers) {
+        const cidHeader = part.headers.find((h: any) => h.name.toLowerCase() === 'content-id');
+        if (cidHeader && part.body?.data) {
+          const cid = cidHeader.value
+            .replace(/[<>]/g, '')
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const base64 = part.body.data;
+          const mime = part.mimeType;
+          result = result.replace(
+            new RegExp(`cid:${cid}`, 'gi'),
+            `data:${mime};base64,${base64}`
+          );
+        }
+      }
+      if (part.parts) {
+        result = replaceCids(part.parts, result);
+      }
+    }
+    return result;
+  };
+
+  return replaceCids(payload?.parts || [], html);
 };
 
 export default async function gmailRoutes(fastify: FastifyInstance) {
@@ -165,7 +195,6 @@ export async function checkGmailForOrg(org: any, fastify: any) {
     console.log(`Gmail: ${messages.length} unread for ${org.gmailEmail}`);
 
     for (const msg of messages) {
-      // ── Use format=full to get the actual email body ──
       const full = await gmailFetch(
         org.gmailAccessToken,
         `/messages/${msg.id}?format=full`
@@ -181,7 +210,6 @@ export async function checkGmailForOrg(org: any, fastify: any) {
       const fromEmail  = (emailMatch[1] || from).trim();
       const fromName   = from.replace(/<.+>/, '').trim() || fromEmail;
 
-      // Skip our own emails
       if (!fromEmail || fromEmail.toLowerCase() === org.gmailEmail?.toLowerCase()) {
         await gmailFetch(org.gmailAccessToken, `/messages/${msg.id}/modify`, {
           method: 'POST',
@@ -190,17 +218,14 @@ export async function checkGmailForOrg(org: any, fastify: any) {
         continue;
       }
 
-      // Mark as read
       await gmailFetch(org.gmailAccessToken, `/messages/${msg.id}/modify`, {
         method: 'POST',
         body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
       });
 
-      // ── Extract the real email body ──
-      const emailBody = extractEmailBody((full as any).payload);
+      const emailBody = extractEmailBodyWithCid((full as any).payload);
       const bodyText  = emailBody.trim() || `[No content — email from ${fromName} <${fromEmail}>]`;
 
-      // ── Existing thread → add reply message ──
       const existingTicket = await fastify.prisma.ticket.findFirst({
         where: { organizationId: org.id, emailThreadId: threadId },
       });
@@ -217,7 +242,6 @@ export async function checkGmailForOrg(org: any, fastify: any) {
         continue;
       }
 
-      // ── New email → create customer + ticket + first message ──
       let customer = await fastify.prisma.customer.findFirst({
         where: { email: fromEmail, organizationId: org.id },
       });
