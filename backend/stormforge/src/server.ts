@@ -23,6 +23,8 @@ import organizationRoutes from './modules/organization/organization.routes.js';
 import imapRoutes from './modules/imap/imap.routes.js';
 import gmailRoutes from './modules/gmail/gmail.routes.js';
 import cannedResponseRoutes from './modules/cannedResponses/cannedResponses.routes.js';
+import contactRoutes from './modules/contact/contact.routes.js';
+import dealRoutes from './modules/deal/deal.routes.js';
 
 const isMain = process.argv[1] === fileURLToPath(import.meta.url);
 const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST !== undefined || process.env.TEST !== undefined;
@@ -63,6 +65,8 @@ export const build = async () => {
   await fastify.register(imapRoutes,         { prefix: '/api/imap' });
   await fastify.register(gmailRoutes,        { prefix: '/api/gmail' });
   await fastify.register(cannedResponseRoutes, { prefix: '/api' });
+  await fastify.register(contactRoutes,        { prefix: '/api/contacts' });
+  await fastify.register(dealRoutes,           { prefix: '/api/deals' });
 
   return fastify;
 };

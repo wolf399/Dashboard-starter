@@ -1,25 +1,28 @@
 import {
     UilEstate,
-    UilEnvelope,    // Better for Inbox
+    UilEnvelope,
     UilUsersAlt,
-    UilPackage,     // Better for Orders
-    UilChart,       // Better for Analytics
+    UilPackage,
+    UilChart,
     UilSignOutAlt,
     UilSetting,
     UilUsdSquare,
     UilClipboardAlt,
-    UilClipboardAlt as UilTasks,   // Reusing Clipboard icon for Tasks
+    UilClipboardAlt as UilTasks,
+    UilUserPlus,
+    UilApps,
 } from "@iconscout/react-unicons";
 
 export const SidebarData = [
-    { icon: UilEstate, heading: "Dashboard" },
-    { icon: UilEnvelope, heading: "Inbox" },
-    { icon: UilUsersAlt, heading: "Customers" },
-    { icon: UilPackage, heading: "Tickets" },
-    { icon: UilChart, heading: "Analytics" },
-    { icon: UilSetting, heading: "Settings" },
-    { icon: UilSignOutAlt, heading: "Logout" },
-    { icon: UilTasks, heading: "Tasks" },
+    { icon: UilEstate,      heading: "Dashboard" },
+    { icon: UilEnvelope,    heading: "Inbox" },
+    { icon: UilUsersAlt,    heading: "Customers" },
+    { icon: UilUserPlus,    heading: "Contacts" },
+    { icon: UilApps,        heading: "Pipeline" },
+    { icon: UilChart,       heading: "Analytics" },
+    { icon: UilTasks,       heading: "Tasks" },
+    { icon: UilSetting,     heading: "Settings" },
+    { icon: UilSignOutAlt,  heading: "Logout" },
 ];
 
 export const CardsData = [

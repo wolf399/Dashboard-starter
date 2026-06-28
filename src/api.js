@@ -340,3 +340,74 @@ export const getCannedResponses = async () => {
   if (!res.ok) throw new Error(data.message);
   return Array.isArray(data) ? data : Array.isArray(data.cannedResponses) ? data.cannedResponses : [];
 };
+
+// ── Contacts ──────────────────────────────────────────────────────
+export const getContacts = async ({ search = '', status = 'ALL' } = {}) => {
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (status && status !== 'ALL') params.set('status', status);
+  const res = await fetch(`${BASE_URL}/contacts?${params}`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data.contacts;
+};
+
+export const createContact = async (body) => {
+  const res = await fetch(`${BASE_URL}/contacts`, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const updateContact = async (id, body) => {
+  const res = await fetch(`${BASE_URL}/contacts/${id}`, { method: 'PATCH', headers: headers(), body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const deleteContact = async (id) => {
+  const res = await fetch(`${BASE_URL}/contacts/${id}`, { method: 'DELETE', headers: headers() });
+  if (!res.ok) { const data = await res.json(); throw new Error(data.message); }
+};
+
+export const convertContact = async (id) => {
+  const res = await fetch(`${BASE_URL}/contacts/${id}/convert`, { method: 'POST', headers: headers(), body: JSON.stringify({}) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+// ── Deals ──────────────────────────────────────────────────────────
+export const getDeals = async () => {
+  const res = await fetch(`${BASE_URL}/deals`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data.deals;
+};
+
+export const getDealStats = async () => {
+  const res = await fetch(`${BASE_URL}/deals/stats`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const createDeal = async (body) => {
+  const res = await fetch(`${BASE_URL}/deals`, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const updateDeal = async (id, body) => {
+  const res = await fetch(`${BASE_URL}/deals/${id}`, { method: 'PATCH', headers: headers(), body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const deleteDeal = async (id) => {
+  const res = await fetch(`${BASE_URL}/deals/${id}`, { method: 'DELETE', headers: headers() });
+  if (!res.ok) { const data = await res.json(); throw new Error(data.message); }
+};
