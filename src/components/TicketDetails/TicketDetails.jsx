@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./TicketDetails.css";
-import { getMessages, sendMessage, updateTicket, getUsers, aiSuggestReplies, aiSummarize, aiTranslate, sendEmail } from "../../api";
+import { getMessages, sendMessage, updateTicket, getUsers, aiSuggestReplies, aiSummarize, aiTranslate, sendEmail, getCannedResponses } from "../../api";
 
 const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
   const [messages, setMessages]               = useState([]);
@@ -20,12 +20,16 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
   const [translating, setTranslating]         = useState(null);
   const [translations, setTranslations]       = useState({});
   const [expandedMessages, setExpandedMessages] = useState({});
+  const [cannedResponses, setCannedResponses]  = useState([]);
+  const [slashMenu, setSlashMenu]              = useState({ open: false, query: '', slashIndex: -1 });
+  const [slashSelectedIdx, setSlashSelectedIdx] = useState(0);
   const threadEndRef = useRef(null);
   const inputRef     = useRef(null);
 
   const scrollToBottom = () => threadEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
   useEffect(() => { getUsers().then(setAgents).catch(console.error); }, []);
+  useEffect(() => { getCannedResponses().then(setCannedResponses).catch(console.error); }, []);
 
   useEffect(() => {
     if (!ticket?.id) return;
@@ -114,6 +118,47 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
       addToast(agentId ? `Assigned to ${agent?.name}` : "Ticket unassigned", "success");
     } catch { addToast("Failed to assign ticket", "error"); }
     finally  { setAssigning(false); }
+  };
+
+  const filteredCanned = cannedResponses.filter((r) => {
+    const q = slashMenu.query.toLowerCase();
+    return r.title.toLowerCase().includes(q) || r.body.toLowerCase().includes(q);
+  });
+
+  const handleReplyChange = (e) => {
+    const val = e.target.value;
+    setReplyText(val);
+    const cursor = e.target.selectionStart;
+    const textBeforeCursor = val.slice(0, cursor);
+    const slashIdx = textBeforeCursor.lastIndexOf('/');
+    if (slashIdx !== -1) {
+      const afterSlash = textBeforeCursor.slice(slashIdx + 1);
+      if (!afterSlash.includes(' ') && !afterSlash.includes('\n')) {
+        setSlashMenu({ open: true, query: afterSlash, slashIndex: slashIdx });
+        setSlashSelectedIdx(0);
+        return;
+      }
+    }
+    setSlashMenu({ open: false, query: '', slashIndex: -1 });
+  };
+
+  const insertCannedResponse = (response) => {
+    const cursor = inputRef.current?.selectionStart ?? replyText.length;
+    const before = replyText.slice(0, slashMenu.slashIndex);
+    const after = replyText.slice(cursor);
+    setReplyText(before + response.body + after);
+    setSlashMenu({ open: false, query: '', slashIndex: -1 });
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const handleReplyKeyDown = (e) => {
+    if (slashMenu.open && filteredCanned.length > 0) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setSlashSelectedIdx((i) => Math.min(i + 1, filteredCanned.length - 1)); return; }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); setSlashSelectedIdx((i) => Math.max(i - 1, 0)); return; }
+      if (e.key === 'Enter')     { e.preventDefault(); insertCannedResponse(filteredCanned[slashSelectedIdx]); return; }
+      if (e.key === 'Escape')    { setSlashMenu({ open: false, query: '', slashIndex: -1 }); return; }
+    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   const handleGetSuggestions = async () => {
@@ -438,16 +483,30 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
         </div>
 
         <div className={`editor-container ${replyMode === "note" ? "note-mode" : ""}`}>
+          {slashMenu.open && filteredCanned.length > 0 && (
+            <div className="canned-slash-dropdown">
+              <div className="canned-slash-header">Canned Responses</div>
+              {filteredCanned.map((r, i) => (
+                <div
+                  key={r.id}
+                  className={`canned-slash-item ${i === slashSelectedIdx ? "canned-slash-item--selected" : ""}`}
+                  onMouseDown={(e) => { e.preventDefault(); insertCannedResponse(r); }}
+                  onMouseEnter={() => setSlashSelectedIdx(i)}
+                >
+                  <div className="canned-slash-title">{r.title}</div>
+                  <div className="canned-slash-body">{r.body}</div>
+                </div>
+              ))}
+            </div>
+          )}
           <textarea
             ref={inputRef}
             placeholder={replyMode === "note"
               ? "Write an internal note — only your team can see this"
-              : "Type your response to the customer..."}
+              : "Type your response... (type / to insert a canned response)"}
             value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
-            }}
+            onChange={handleReplyChange}
+            onKeyDown={handleReplyKeyDown}
           />
           <div className="editor-toolbar">
             <div className="toolbar-left">

@@ -296,3 +296,47 @@ export const syncGmail = async () => {
   if (!res.ok) throw new Error(data.message);
   return data;
 };
+
+export const updateCustomer = async (id, data) => {
+  const res = await fetch(`${BASE_URL}/customers/${id}`, {
+    method: 'PATCH',
+    headers: headers(),
+    body: JSON.stringify(data),
+  });
+  const resData = await res.json();
+  if (!res.ok) throw new Error(resData.message);
+  return resData;
+};
+
+export const getCustomerNotes = async (customerId) => {
+  const res = await fetch(`${BASE_URL}/customers/${customerId}/notes`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data.notes;
+};
+
+export const createCustomerNote = async (customerId, content) => {
+  const res = await fetch(`${BASE_URL}/customers/${customerId}/notes`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({ content }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const deleteCustomerNote = async (customerId, noteId) => {
+  const res = await fetch(`${BASE_URL}/customers/${customerId}/notes/${noteId}`, {
+    method: 'DELETE',
+    headers: headers(),
+  });
+  if (!res.ok) { const data = await res.json(); throw new Error(data.message); }
+};
+
+export const getCannedResponses = async () => {
+  const res = await fetch(`${BASE_URL}/canned-responses`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return Array.isArray(data) ? data : Array.isArray(data.cannedResponses) ? data.cannedResponses : [];
+};

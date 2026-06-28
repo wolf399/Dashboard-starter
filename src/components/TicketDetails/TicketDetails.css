@@ -511,9 +511,10 @@
 .reply-mode-tab.active-note  { color: #d97706; border-bottom-color: #d97706; font-weight: 600; }
 
 .editor-container {
+  position: relative;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   background: #fff;
@@ -615,3 +616,56 @@
 
 .note-send-btn { background: #d97706 !important; }
 .note-send-btn:hover { background: #b45309 !important; }
+
+/* ── Canned responses slash dropdown ── */
+.canned-slash-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.canned-slash-header {
+  padding: 8px 12px 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.canned-slash-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #f9fafb;
+}
+
+.canned-slash-item:last-child { border-bottom: none; }
+
+.canned-slash-item--selected,
+.canned-slash-item:hover {
+  background: #f5f3ff;
+}
+
+.canned-slash-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.canned-slash-body {
+  font-size: 0.78rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

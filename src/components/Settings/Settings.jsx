@@ -95,7 +95,6 @@ const EmailSection = ({ addToast }) => {
 
   useEffect(() => {
     getGmailStatus().then(setStatus).catch(console.error).finally(() => setLoading(false));
-
     const params = new URLSearchParams(window.location.search);
     if (params.get('gmailConnected') === 'true') {
       addToast('Gmail connected successfully! 🎉', 'success');
@@ -169,11 +168,7 @@ const EmailSection = ({ addToast }) => {
             <p style={{ color: '#6b7280', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
               Emails sent to your Gmail will appear as tickets. Replies go out from your own Gmail address.
             </p>
-            <button
-              className="settings-save-btn"
-              onClick={handleConnect}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px' }}
-            >
+            <button className="settings-save-btn" onClick={handleConnect} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px' }}>
               <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="Google" />
               Connect Gmail
             </button>
@@ -186,6 +181,154 @@ const EmailSection = ({ addToast }) => {
               <li>Emails sent to your Gmail become tickets automatically</li>
               <li>When you reply, customer gets email from your Gmail address</li>
             </ol>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CannedResponsesSection = ({ addToast }) => {
+  const [responses, setResponses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState({ title: '', body: '' });
+  const [saving, setSaving] = useState(false);
+
+  const token = localStorage.getItem('token');
+
+  const fetchResponses = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/canned-responses`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setResponses(Array.isArray(data) ? data : Array.isArray(data.cannedResponses) ? data.cannedResponses : []);
+    } catch (err) {
+      addToast('Failed to load canned responses', 'error');
+      setResponses([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchResponses(); }, []);
+
+  const handleSave = async () => {
+    if (!form.title.trim() || !form.body.trim()) {
+      addToast('Title and body are required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const url = editingId ? `${BASE_URL}/canned-responses/${editingId}` : `${BASE_URL}/canned-responses`;
+      const method = editingId ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      addToast(editingId ? 'Updated successfully!' : 'Created successfully!', 'success');
+      setForm({ title: '', body: '' });
+      setEditingId(null);
+      setShowForm(false);
+      fetchResponses();
+    } catch (err) {
+      addToast('Failed to save canned response', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEdit = (r) => {
+    setForm({ title: r.title, body: r.body });
+    setEditingId(r.id);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this canned response?')) return;
+    try {
+      await fetch(`${BASE_URL}/canned-responses/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      addToast('Deleted', 'info');
+      fetchResponses();
+    } catch (err) {
+      addToast('Failed to delete', 'error');
+    }
+  };
+
+  const handleCancel = () => {
+    setForm({ title: '', body: '' });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  if (loading) return <div style={{ padding: '2rem', color: '#9ca3af' }}>Loading...</div>;
+
+  return (
+    <div className="canned-responses-section">
+      {!showForm ? (
+        <>
+          <button className="settings-save-btn" onClick={() => setShowForm(true)} style={{ marginBottom: '1.5rem' }}>
+            + New Canned Response
+          </button>
+          {responses.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: '#9ca3af' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>💬</div>
+              <p>No canned responses yet. Create your first one!</p>
+            </div>
+          ) : (
+            <div className="canned-list">
+              {responses.map((r) => (
+                <div key={r.id} className="canned-item">
+                  <div className="canned-item-content">
+                    <div className="canned-item-title">{r.title}</div>
+                    <div className="canned-item-body">{r.body}</div>
+                  </div>
+                  <div className="canned-item-actions">
+                    <button className="canned-edit-btn" onClick={() => handleEdit(r)}>Edit</button>
+                    <button className="canned-delete-btn" onClick={() => handleDelete(r.id)}>Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="canned-form">
+          <h3 style={{ margin: '0 0 1.5rem', fontSize: '1rem', fontWeight: 600 }}>
+            {editingId ? 'Edit Canned Response' : 'New Canned Response'}
+          </h3>
+          <div className="settings-form-group">
+            <label>Title</label>
+            <input
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder="e.g. Welcome message, Refund policy..."
+            />
+          </div>
+          <div className="settings-form-group">
+            <label>Response Body</label>
+            <textarea
+              value={form.body}
+              onChange={(e) => setForm({ ...form, body: e.target.value })}
+              placeholder="Type your canned response here..."
+              rows={6}
+              style={{ width: '100%', padding: '0.75rem', borderRadius: 8, border: '1px solid #e5e7eb', fontSize: '0.9rem', resize: 'vertical', fontFamily: 'inherit' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button className="settings-save-btn" onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : editingId ? 'Update' : 'Create'}
+            </button>
+            <button className="canned-delete-btn" onClick={handleCancel} style={{ padding: '0.6rem 1.2rem' }}>
+              Cancel
+            </button>
           </div>
         </div>
       )}
@@ -273,6 +416,7 @@ const Settings = ({ addToast }) => {
             { key: "preferences", label: "Preferences", icon: "⚙️" },
             { key: "team", label: "Team & Invites", icon: "👥" },
             { key: "email", label: "Email Inbox", icon: "📧" },
+            { key: "canned", label: "Canned Responses", icon: "💬" },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -410,10 +554,19 @@ const Settings = ({ addToast }) => {
               <EmailSection addToast={addToast} />
             </div>
           )}
+
+          {activeTab === "canned" && (
+            <div className="settings-card">
+              <div className="settings-card-header">
+                <h2>Canned Responses</h2>
+                <p>Save reply templates to use quickly in tickets</p>
+              </div>
+              <CannedResponsesSection addToast={addToast} />
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 };
-
 export default Settings;

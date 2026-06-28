@@ -22,6 +22,8 @@ interface UpdateCustomerBody {
 }
 
 interface CustomerParams { id: string; }
+interface NoteParams { id: string; noteId: string; }
+interface NoteBody { content: string; }
 
 const customerRoutes = async (fastify: FastifyInstance) => {
   schemasList.forEach((schema) => fastify.addSchema(schema));
@@ -104,6 +106,47 @@ const customerRoutes = async (fastify: FastifyInstance) => {
       });
       if (!customer) return reply.status(404).send({ error: 'NOT_FOUND', message: 'Customer not found' });
       await fastify.prisma.customer.delete({ where: { id } });
+      return reply.status(204).send();
+    },
+  });
+  fastify.get<{ Params: CustomerParams }>('/:id/notes', {
+    handler: async (request, reply) => {
+      const user = await request.jwtVerify() as any;
+      const { id } = request.params;
+      const customer = await fastify.prisma.customer.findFirst({ where: { id, organizationId: user.organizationId } });
+      if (!customer) return reply.status(404).send({ error: 'NOT_FOUND', message: 'Customer not found' });
+      const notes = await fastify.prisma.note.findMany({
+        where: { customerId: id, organizationId: user.organizationId },
+        orderBy: { createdAt: 'desc' },
+      });
+      return { notes };
+    },
+  });
+
+  fastify.post<{ Params: CustomerParams; Body: NoteBody }>('/:id/notes', {
+    handler: async (request, reply) => {
+      const user = await request.jwtVerify() as any;
+      const { id } = request.params;
+      const { content } = request.body;
+      if (!content?.trim()) return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Content is required' });
+      const customer = await fastify.prisma.customer.findFirst({ where: { id, organizationId: user.organizationId } });
+      if (!customer) return reply.status(404).send({ error: 'NOT_FOUND', message: 'Customer not found' });
+      const note = await fastify.prisma.note.create({
+        data: { content: content.trim(), customerId: id, organizationId: user.organizationId },
+      });
+      return reply.status(201).send(note);
+    },
+  });
+
+  fastify.delete<{ Params: NoteParams }>('/:id/notes/:noteId', {
+    handler: async (request, reply) => {
+      const user = await request.jwtVerify() as any;
+      const { id, noteId } = request.params;
+      const note = await fastify.prisma.note.findFirst({
+        where: { id: noteId, customerId: id, organizationId: user.organizationId },
+      });
+      if (!note) return reply.status(404).send({ error: 'NOT_FOUND', message: 'Note not found' });
+      await fastify.prisma.note.delete({ where: { id: noteId } });
       return reply.status(204).send();
     },
   });

@@ -103,6 +103,10 @@ const Customers = () => {
     setCustomers((prev) => [newCustomer, ...prev]);
   };
 
+  const handleCustomerUpdate = (updated) => {
+    setCustomers((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  };
+
   return (
     <div className="Customers">
       {showModal && (
@@ -159,7 +163,7 @@ const Customers = () => {
       ) : filtered.length === 0 ? (
         <p style={{ padding: "1rem", color: "#aaa" }}>No customers found.</p>
       ) : (
-        <CustomerTable data={filtered} />
+        <CustomerTable data={filtered} onCustomerUpdate={handleCustomerUpdate} />
       )}
     </div>
   );

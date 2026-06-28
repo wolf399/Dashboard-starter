@@ -8,8 +8,24 @@ const statusColors = {
   inactive: { bg: "#fee2e2", color: "#dc2626" },
 };
 
-const CustomerTable = ({ data }) => {
+const TAG_COLORS = {
+  vip:        { bg: "#fef3c7", color: "#d97706" },
+  "at-risk":  { bg: "#fee2e2", color: "#dc2626" },
+  prospect:   { bg: "#ede9fe", color: "#7c3aed" },
+  churned:    { bg: "#fecaca", color: "#b91c1c" },
+  enterprise: { bg: "#dbeafe", color: "#1d4ed8" },
+  lead:       { bg: "#f0fdf4", color: "#15803d" },
+};
+
+const tagStyle = (t) => TAG_COLORS[t.toLowerCase()] || { bg: "#eff6ff", color: "#3b82f6" };
+
+const CustomerTable = ({ data, onCustomerUpdate }) => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  const handleUpdate = (updated) => {
+    if (selectedCustomer?.id === updated.id) setSelectedCustomer(updated);
+    onCustomerUpdate?.(updated);
+  };
 
   return (
     <>
@@ -38,25 +54,17 @@ const CustomerTable = ({ data }) => {
 
               const lastActivity = c.lastActivity
                 ? new Date(c.lastActivity).toLocaleDateString("en-US", {
-                    month: "short", day: "numeric", year: "numeric"
+                    month: "short", day: "numeric", year: "numeric",
                   })
                 : "—";
 
               return (
-                <tr
-                  key={c.id}
-                  onClick={() => setSelectedCustomer(c)}
-                  style={{ cursor: "pointer" }}
-                >
+                <tr key={c.id} onClick={() => setSelectedCustomer(c)} style={{ cursor: "pointer" }}>
                   <td className="customer-info">
                     <div className="avatar">{c.name.charAt(0)}</div>
                     <div className="info">
                       <div className="name">{c.name}</div>
-                      {c.company && (
-                        <div className="company">
-                          <UilBuilding size={13} /> {c.company}
-                        </div>
-                      )}
+                      {c.company && <div className="company"><UilBuilding size={13} /> {c.company}</div>}
                     </div>
                   </td>
 
@@ -75,7 +83,7 @@ const CustomerTable = ({ data }) => {
 
                   <td className="tags">
                     {tags.map((t) => (
-                      <span key={t} className="tag">{t}</span>
+                      <span key={t} className="tag" style={tagStyle(t)}>{t}</span>
                     ))}
                   </td>
 
@@ -98,6 +106,7 @@ const CustomerTable = ({ data }) => {
         <CustomerPanel
           customer={selectedCustomer}
           onClose={() => setSelectedCustomer(null)}
+          onUpdate={handleUpdate}
         />
       )}
     </>
