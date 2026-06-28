@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./CustomerPanel.css";
 import { getTickets, getCustomerNotes, createCustomerNote, deleteCustomerNote, updateCustomer } from "../../api";
-import { UilTimes, UilEnvelope, UilPhone, UilBuilding, UilTicket, UilNotes, UilTrashAlt, UilPlus } from "@iconscout/react-unicons";
+import { UilTimes, UilEnvelope, UilPhone, UilBuilding, UilTicket, UilNotes, UilTrashAlt, UilPlus, UilEdit } from "@iconscout/react-unicons";
 
 const TAG_COLORS = {
   vip:        { bg: "#fef3c7", color: "#d97706" },
@@ -32,6 +32,9 @@ const CustomerPanel = ({ customer, onClose, onUpdate }) => {
   const [savingNote, setSavingNote] = useState(false);
   const [tagInput, setTagInput]     = useState("");
   const [tags, setTags]             = useState([]);
+  const [editing, setEditing]       = useState(false);
+  const [editForm, setEditForm]     = useState({});
+  const [saving, setSaving]         = useState(false);
 
   useEffect(() => {
     if (!customer) return;
@@ -42,6 +45,7 @@ const CustomerPanel = ({ customer, onClose, onUpdate }) => {
     );
     setTab("overview");
     setNoteText("");
+    setEditing(false);
     setLoading(true);
     Promise.all([
       getTickets().then((all) => all.filter((t) => t.customerId === customer.id)),
@@ -80,6 +84,28 @@ const CustomerPanel = ({ customer, onClose, onUpdate }) => {
     } catch (e) { console.error(e); }
   };
 
+  const startEditing = () => {
+    setEditForm({
+      name:    customer.name    || "",
+      email:   customer.email   || "",
+      phone:   customer.phone   || "",
+      company: customer.company || "",
+      status:  customer.status  || "ACTIVE",
+    });
+    setEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editForm.name.trim()) return;
+    setSaving(true);
+    try {
+      const updated = await updateCustomer(customer.id, editForm);
+      onUpdate?.(updated);
+      setEditing(false);
+    } catch (e) { console.error(e); }
+    finally { setSaving(false); }
+  };
+
   const handleAddNote = async () => {
     if (!noteText.trim()) return;
     setSavingNote(true);
@@ -110,23 +136,63 @@ const CustomerPanel = ({ customer, onClose, onUpdate }) => {
         {/* Header */}
         <div className="panel-header">
           <h2>Customer Profile</h2>
-          <button className="panel-close" onClick={onClose}><UilTimes size="20" /></button>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button className="panel-edit-btn" onClick={editing ? () => setEditing(false) : startEditing} title={editing ? "Cancel" : "Edit"}>
+              {editing ? <UilTimes size="16" /> : <UilEdit size="16" />}
+            </button>
+            <button className="panel-close" onClick={onClose}><UilTimes size="20" /></button>
+          </div>
         </div>
 
-        {/* Profile */}
-        <div className="panel-profile">
-          <div className="panel-avatar">{customer.name.charAt(0)}</div>
-          <div className="panel-identity">
-            <h3>{customer.name}</h3>
-            {customer.company && (
-              <span className="panel-company"><UilBuilding size={13} /> {customer.company}</span>
-            )}
+        {/* Edit form */}
+        {editing ? (
+          <div className="panel-edit-form">
+            <div className="edit-form-group">
+              <label>Name</label>
+              <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="Full name" />
+            </div>
+            <div className="edit-form-group">
+              <label>Email</label>
+              <input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} placeholder="email@example.com" />
+            </div>
+            <div className="edit-form-group">
+              <label>Phone</label>
+              <input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} placeholder="+1 555 000 0000" />
+            </div>
+            <div className="edit-form-group">
+              <label>Company</label>
+              <input value={editForm.company} onChange={(e) => setEditForm({ ...editForm, company: e.target.value })} placeholder="Company name" />
+            </div>
+            <div className="edit-form-group">
+              <label>Status</label>
+              <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+              </select>
+            </div>
+            <div className="edit-form-actions">
+              <button className="edit-save-btn" onClick={handleSaveEdit} disabled={saving || !editForm.name.trim()}>
+                {saving ? "Saving…" : "Save changes"}
+              </button>
+              <button className="edit-cancel-btn" onClick={() => setEditing(false)}>Cancel</button>
+            </div>
           </div>
-          <span className="panel-status" style={{
-            background: customer.status === "ACTIVE" ? "#dcfce7" : "#fee2e2",
-            color:      customer.status === "ACTIVE" ? "#16a34a" : "#dc2626",
-          }}>{customer.status}</span>
-        </div>
+        ) : (
+          /* Profile */
+          <div className="panel-profile">
+            <div className="panel-avatar">{customer.name.charAt(0)}</div>
+            <div className="panel-identity">
+              <h3>{customer.name}</h3>
+              {customer.company && (
+                <span className="panel-company"><UilBuilding size={13} /> {customer.company}</span>
+              )}
+            </div>
+            <span className="panel-status" style={{
+              background: customer.status === "ACTIVE" ? "#dcfce7" : "#fee2e2",
+              color:      customer.status === "ACTIVE" ? "#16a34a" : "#dc2626",
+            }}>{customer.status}</span>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="panel-tabs">

@@ -58,6 +58,87 @@
 }
 .panel-close:hover { background: #f3f4f6; color: #374151; }
 
+.panel-edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.panel-edit-btn:hover { background: #f3f4f6; color: #16a34a; }
+
+/* ── Edit Form ── */
+.panel-edit-form {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.edit-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.edit-form-group label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.edit-form-group input,
+.edit-form-group select {
+  padding: 7px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+  background: #fff;
+}
+
+.edit-form-group input:focus,
+.edit-form-group select:focus { border-color: #16a34a; }
+
+.edit-form-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+.edit-save-btn {
+  flex: 1;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.edit-save-btn:hover:not(:disabled) { background: #15803d; }
+.edit-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.edit-cancel-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.edit-cancel-btn:hover { background: #e5e7eb; }
+
 /* ── Profile ── */
 .panel-profile {
   display: flex;
