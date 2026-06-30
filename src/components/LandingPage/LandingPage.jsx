@@ -76,22 +76,22 @@ const LandingPage = ({ onEnterApp }) => {
 
   const plans = [
     {
-      name: "Basic", price: "$29", period: "/mo", desc: "Perfect for small teams just getting started.",
+      name: "Starter", price: "$9", period: "/mo", desc: "Perfect for small teams just getting started.",
       color: "#f9fafb", border: "#e5e7eb", badge: null,
-      features: ["Up to 3 agents", "500 tickets/month", "Inbox & customer profiles", "Basic analytics", "Email support"],
+      features: ["Up to 2 agents", "500 tickets/month", "Inbox & customer profiles", "Canned responses", "Basic analytics", "Email support"],
       cta: "Start Free Trial", ctaStyle: "outline",
     },
     {
-      name: "Professional", price: "$79", period: "/mo", desc: "For growing teams that need more power.",
+      name: "Growth", price: "$29", period: "/mo", desc: "For growing teams that need more power.",
       color: "#f0fdf4", border: "#16a34a", badge: "Most Popular",
-      features: ["Up to 15 agents", "Unlimited tickets", "AI reply suggestions", "Advanced analytics", "Task management", "Priority support"],
+      features: ["Up to 10 agents", "Unlimited tickets", "AI reply suggestions", "Pipeline & deals", "Contact management", "Task management", "Advanced analytics", "Priority support"],
       cta: "Start Free Trial", ctaStyle: "solid",
     },
     {
-      name: "Business", price: "$199", period: "/mo", desc: "Enterprise-grade for large support teams.",
+      name: "Business", price: "$79", period: "/mo", desc: "Enterprise-grade for large support teams.",
       color: "#0f172a", border: "#1e293b", badge: null,
-      features: ["Unlimited agents", "Unlimited tickets", "AI summary & suggestions", "Custom analytics", "API access", "Dedicated account manager", "SLA guarantee"],
-      cta: "Contact Sales", ctaStyle: "dark",
+      features: ["Unlimited agents", "Unlimited tickets", "AI summary & suggestions", "Pipeline & deals", "Contact management", "Custom analytics", "Canned responses", "Priority support", "Dedicated onboarding"],
+      cta: "Start Free Trial", ctaStyle: "dark",
     },
   ];
 
