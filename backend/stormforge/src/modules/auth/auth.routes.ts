@@ -110,6 +110,13 @@ const authRoutes = async (fastify: FastifyInstance) => {
           return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Invalid email or password' });
         }
 
+        if (!user.password) {
+          return reply.status(401).send({
+            error: 'UNAUTHORIZED',
+            message: 'This account uses Google Sign-In. Please continue with Google.',
+          });
+        }
+
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
           return reply.status(401).send({ error: 'UNAUTHORIZED', message: 'Invalid email or password' });

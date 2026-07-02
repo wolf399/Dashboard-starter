@@ -67,6 +67,9 @@ const userRoutes = async (fastify: FastifyInstance) => {
         const { currentPassword, newPassword } = request.body;
         const user = await fastify.prisma.user.findUnique({ where: { id } });
         if (!user) return reply.status(404).send({ message: 'User not found' });
+        if (!user.password) {
+          return reply.status(400).send({ message: 'This account uses Google Sign-In and has no password to change' });
+        }
         const bcrypt = await import('bcryptjs');
         const valid = await bcrypt.compare(currentPassword, user.password);
         if (!valid) return reply.status(400).send({ message: 'Current password is incorrect' });

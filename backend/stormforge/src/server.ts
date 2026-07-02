@@ -15,6 +15,7 @@ import customerRoutes from './modules/customer/customer.routes.js';
 import ticketRoutes from './modules/ticket/ticket.routes.js';
 import messageRoutes from './modules/message/message.routes.js';
 import authRoutes from './modules/auth/auth.routes.js';
+import googleAuthRoutes from './modules/auth/google.routes.js';
 import taskRoutes from './modules/task/task.routes.js';
 import aiRoutes from './modules/ai/ai.routes.js';
 import emailRoutes from './modules/email/email.routes.js';
@@ -53,6 +54,7 @@ export const build = async () => {
   fastify.get('/health', async () => ({ status: 'OK', timestamp: new Date().toISOString(), uptime: process.uptime() }));
 
   await fastify.register(authRoutes,         { prefix: '/api/auth' });
+  await fastify.register(googleAuthRoutes,   { prefix: '/api/auth' });
   await fastify.register(userRoutes,         { prefix: '/api/users' });
   await fastify.register(customerRoutes,     { prefix: '/api/customers' });
   await fastify.register(ticketRoutes,       { prefix: '/api/tickets' });

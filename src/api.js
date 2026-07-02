@@ -39,6 +39,26 @@ export const logout = () => {
   localStorage.removeItem('user');
 };
 
+export const getGoogleClientId = async () => {
+  const res = await fetch(`${BASE_URL}/auth/google/client-id`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const loginWithGoogle = async (code) => {
+  const res = await fetch(`${BASE_URL}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  localStorage.setItem('token', data.token);
+  localStorage.setItem('user', JSON.stringify(data.user));
+  return data;
+};
+
 // CUSTOMERS
 export const getCustomers = async () => {
   const res = await fetch(`${BASE_URL}/customers`, { headers: headers() });

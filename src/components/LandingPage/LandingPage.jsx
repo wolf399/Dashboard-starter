@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./LandingPage.css";
-import { login, register, validateInvite, markInviteUsed } from "../../api";
+import Login from "../Auth/Login";
+import Signup from "../Auth/Signup";
 
 const FeatureIcon = ({ type, accent, bg }) => {
   const content = {
@@ -73,9 +74,6 @@ const CheckIcon = ({ color = "#16a34a" }) => (
 
 const LandingPage = ({ onEnterApp }) => {
   const [mode, setMode] = useState(null);
-  const [form, setForm] = useState({ name: "", email: "", password: "", orgName: "" });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [inviteToken, setInviteToken] = useState(null);
 
@@ -93,38 +91,19 @@ const LandingPage = ({ onEnterApp }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleSubmit = async () => {
-    setError("");
+  if (mode === "login") {
+    return <Login onSuccess={onEnterApp} onSwitchToSignup={() => setMode("register")} />;
+  }
 
-    if (mode === "register") {
-      if (!form.name.trim()) { setError("Please enter your name."); return; }
-      if (!form.email.trim()) { setError("Please enter your email."); return; }
-      if (!form.password.trim()) { setError("Please enter a password."); return; }
-      if (!inviteToken && !form.orgName.trim()) { setError("Please enter your company name."); return; }
-    }
-
-    setLoading(true);
-    try {
-      if (mode === "login") {
-        await login(form.email, form.password);
-      } else {
-        if (inviteToken) {
-          const result = await validateInvite(inviteToken);
-          if (!result.valid) {
-            setError(result.message || "Invalid or expired invite link.");
-            setLoading(false);
-            return;
-          }
-        }
-        await register(form.name, form.email, form.password, 'AGENT', inviteToken, form.orgName);
-      }
-      onEnterApp();
-    } catch (err) {
-      setError(err.message || "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (mode === "register") {
+    return (
+      <Signup
+        onSuccess={onEnterApp}
+        onSwitchToLogin={() => setMode("login")}
+        inviteToken={inviteToken}
+      />
+    );
+  }
 
   const features = [
     { icon: "inbox", title: "Smart Inbox", desc: "All your customer conversations in one beautifully organized inbox. Filter by status, search instantly, never miss a message.", color: "#f0fdf4", accent: "#16a34a" },
@@ -376,64 +355,6 @@ const LandingPage = ({ onEnterApp }) => {
           <span>Privacy · Terms</span>
         </div>
       </footer>
-
-      {/* Auth Modal */}
-      {mode && (
-        <div className="auth-overlay" onClick={() => { setMode(null); setInviteToken(null); }}>
-          <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="auth-close" onClick={() => { setMode(null); setInviteToken(null); }}>×</button>
-            <div className="auth-logo">
-              <div className="nav-logo-icon">A</div>
-              <span>Agent<strong>CRM</strong></span>
-            </div>
-            {inviteToken && mode === "register" && (
-              <div className="invite-banner">
-                You've been invited! Create your account to join the workspace.
-              </div>
-            )}
-            <h2>{mode === "login" ? "Welcome back" : "Create your account"}</h2>
-            <p className="auth-sub">{mode === "login" ? "Sign in to your workspace" : "Start your free trial today"}</p>
-            {error && <div className="auth-error">{error}</div>}
-
-            {mode === "register" && (
-              <input
-                placeholder="Full name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            )}
-            {mode === "register" && !inviteToken && (
-              <input
-                placeholder="Company / Workspace name"
-                value={form.orgName}
-                onChange={(e) => setForm({ ...form, orgName: e.target.value })}
-              />
-            )}
-            <input
-              placeholder="Email address"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <input
-              placeholder="Password"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            />
-            <button className="auth-submit" onClick={handleSubmit} disabled={loading}>
-              {loading ? "Please wait..." : mode === "login" ? "Sign in" : "Create account"}
-            </button>
-            <p className="auth-switch">
-              {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={() => setMode(mode === "login" ? "register" : "login")}>
-                {mode === "login" ? "Sign up free" : "Sign in"}
-              </button>
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
