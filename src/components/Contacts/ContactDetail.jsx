@@ -249,8 +249,28 @@ const EmailsTab = ({ tickets, loading }) => {
 // ── Calls tab ────────────────────────────────────────────────────
 const OUTCOMES = ["Answered", "Voicemail", "No Answer"];
 
+// HTML date inputs are timezone-naive "YYYY-MM-DD" strings. Parsing them
+// with `new Date(str)` treats them as UTC midnight, which shifts to the
+// wrong calendar day (and looks like it happened many hours ago) once
+// converted back to the viewer's local timezone. Always compute/compare
+// "today" using local date parts, and reconstruct backdated dates at local
+// noon so they land on the intended day regardless of timezone offset.
+const localDateStr = (d = new Date()) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+const callDateToISOString = (dateStr) => {
+  if (!dateStr) return undefined;
+  if (dateStr === localDateStr()) return new Date().toISOString();
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0).toISOString();
+};
+
 const CallsTab = ({ contactId, calls, onLogged, addToast }) => {
-  const [form, setForm] = useState({ outcome: "Answered", duration: "", notes: "", date: new Date().toISOString().slice(0, 10) });
+  const [form, setForm] = useState({ outcome: "Answered", duration: "", notes: "", date: localDateStr() });
   const [saving, setSaving] = useState(false);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -262,10 +282,10 @@ const CallsTab = ({ contactId, calls, onLogged, addToast }) => {
         outcome: form.outcome,
         duration: form.duration ? Number(form.duration) : undefined,
         notes: form.notes || undefined,
-        createdAt: form.date ? new Date(form.date).toISOString() : undefined,
+        createdAt: callDateToISOString(form.date),
       });
       onLogged(call);
-      setForm({ outcome: "Answered", duration: "", notes: "", date: new Date().toISOString().slice(0, 10) });
+      setForm({ outcome: "Answered", duration: "", notes: "", date: localDateStr() });
       addToast?.("Call logged", "success");
     } catch (e) { addToast?.(e.message || "Failed to log call", "error"); }
     finally { setSaving(false); }
