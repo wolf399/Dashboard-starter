@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./Contacts.css";
 import {
-  getContacts, createContact, updateContact, deleteContact, convertContact,
+  getContacts, createContact, updateContact, deleteContact,
 } from "../../api";
 import {
-  UilPlus, UilSearch, UilTimes, UilEnvelope, UilPhone, UilBuilding,
-  UilEdit, UilTrashAlt, UilUserCheck, UilBriefcase,
+  UilPlus, UilSearch, UilTimes, UilEdit, UilTrashAlt,
 } from "@iconscout/react-unicons";
 
 const STATUS_CFG = {
@@ -129,118 +128,10 @@ const ContactForm = ({ contact, onClose, onSave, addToast }) => {
   );
 };
 
-// ── Contact Detail Panel ─────────────────────────────────────────
-const ContactDetail = ({ contact, onEdit, onDelete, onConvert, addToast }) => {
-  const sc = STATUS_CFG[contact.status] || STATUS_CFG.LEAD;
-  const src = contact.source ? SOURCE_CFG[contact.source] || SOURCE_CFG.Other : null;
-  const initials = (contact.firstName[0] || "") + (contact.lastName[0] || "");
-
-  const handleDelete = async () => {
-    if (!window.confirm(`Delete ${contact.firstName} ${contact.lastName}?`)) return;
-    try { await onDelete(contact.id); addToast?.("Contact deleted", "info"); }
-    catch (e) { addToast?.(e.message || "Failed to delete", "error"); }
-  };
-
-  const handleConvert = async () => {
-    if (!window.confirm(`Convert ${contact.firstName} ${contact.lastName} to a Customer?`)) return;
-    try {
-      await onConvert(contact.id);
-      addToast?.("Contact converted to Customer!", "success");
-    } catch (e) { addToast?.(e.message || "Conversion failed", "error"); }
-  };
-
-  return (
-    <div className="cd-panel">
-      {/* Profile */}
-      <div className="cd-profile">
-        <div className="cd-avatar">{initials}</div>
-        <div className="cd-identity">
-          <h2>{contact.firstName} {contact.lastName}</h2>
-          {(contact.jobTitle || contact.company) && (
-            <p className="cd-sub">
-              {contact.jobTitle}{contact.jobTitle && contact.company ? " · " : ""}{contact.company}
-            </p>
-          )}
-          <div className="cd-badges">
-            <span className="cd-badge" style={sc}>{contact.status}</span>
-            {src && <span className="cd-badge" style={src}>{contact.source}</span>}
-          </div>
-        </div>
-        <div className="cd-actions">
-          <button className="cd-btn cd-btn--edit" onClick={() => onEdit(contact)} title="Edit"><UilEdit size={15} /></button>
-          <button className="cd-btn cd-btn--del" onClick={handleDelete} title="Delete"><UilTrashAlt size={15} /></button>
-        </div>
-      </div>
-
-      {/* Convert button */}
-      {(contact.status === "LEAD" || contact.status === "QUALIFIED") && (
-        <div className="cd-convert-bar">
-          <button className="cd-convert-btn" onClick={handleConvert}>
-            <UilUserCheck size={15} /> Convert to Customer
-          </button>
-        </div>
-      )}
-
-      {/* Contact info */}
-      <div className="cd-section">
-        <h4>Contact Info</h4>
-        {contact.email && <div className="cd-row"><UilEnvelope size={14} /><span>{contact.email}</span></div>}
-        {contact.phone && <div className="cd-row"><UilPhone    size={14} /><span>{contact.phone}</span></div>}
-        {contact.company && <div className="cd-row"><UilBuilding size={14} /><span>{contact.company}</span></div>}
-        {!contact.email && !contact.phone && !contact.company && <p className="cd-empty">No contact info.</p>}
-      </div>
-
-      {/* Dates */}
-      <div className="cd-section cd-dates">
-        <div className="cd-date-row"><span>Created</span><span>{fmt(contact.createdAt)}</span></div>
-        <div className="cd-date-row"><span>Updated</span><span>{fmt(contact.updatedAt)}</span></div>
-      </div>
-
-      {/* Tags */}
-      {contact.tags && (
-        <div className="cd-section">
-          <h4>Tags</h4>
-          <div className="cd-tags">
-            {contact.tags.split(",").map((t) => t.trim()).filter(Boolean).map((t) => (
-              <span key={t} className="cd-tag">{t}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Deals */}
-      {contact.deals && contact.deals.length > 0 && (
-        <div className="cd-section">
-          <h4>Linked Deals ({contact.deals.length})</h4>
-          <div className="cd-deals">
-            {contact.deals.map((d) => (
-              <div key={d.id} className="cd-deal">
-                <UilBriefcase size={14} />
-                <span className="cd-deal-title">{d.title}</span>
-                {d.value != null && <span className="cd-deal-value">${d.value.toLocaleString()}</span>}
-                <span className="cd-deal-stage">{d.stage}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Notes */}
-      {contact.notes && (
-        <div className="cd-section">
-          <h4>Notes</h4>
-          <p className="cd-notes">{contact.notes}</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
 // ── Main Contacts Page ───────────────────────────────────────────
-const Contacts = ({ addToast }) => {
+const Contacts = ({ addToast, onOpenContact }) => {
   const [contacts, setContacts]     = useState([]);
   const [loading, setLoading]       = useState(true);
-  const [selected, setSelected]     = useState(null);
   const [search, setSearch]         = useState("");
   const [statusFilter, setStatus]   = useState("ALL");
   const [showForm, setShowForm]     = useState(false);
@@ -259,29 +150,23 @@ const Contacts = ({ addToast }) => {
   const handleSave = (result, isEdit) => {
     if (isEdit) {
       setContacts((prev) => prev.map((c) => (c.id === result.id ? result : c)));
-      if (selected?.id === result.id) setSelected(result);
     } else {
       setContacts((prev) => [result, ...prev]);
-      setSelected(result);
     }
     addToast?.(isEdit ? "Contact updated" : "Contact created", "success");
   };
 
-  const handleDelete = async (id) => {
-    await deleteContact(id);
-    setContacts((prev) => prev.filter((c) => c.id !== id));
-    if (selected?.id === id) setSelected(null);
-  };
-
-  const handleConvert = async (id) => {
-    await convertContact(id);
-    const updated = { ...selected, status: "CONVERTED" };
-    setContacts((prev) => prev.map((c) => (c.id === id ? updated : c)));
-    setSelected(updated);
-  };
-
   const openEdit = (c) => { setEditContact(c); setShowForm(true); };
   const openAdd  = () => { setEditContact(null); setShowForm(true); };
+
+  const handleDelete = async (c) => {
+    if (!window.confirm(`Delete ${c.firstName} ${c.lastName}?`)) return;
+    try {
+      await deleteContact(c.id);
+      setContacts((prev) => prev.filter((x) => x.id !== c.id));
+      addToast?.("Contact deleted", "info");
+    } catch (e) { addToast?.(e.message || "Failed to delete", "error"); }
+  };
 
   const counts = STATUSES.reduce((acc, s) => {
     acc[s] = s === "ALL" ? contacts.length : contacts.filter((c) => c.status === s).length;
@@ -300,8 +185,8 @@ const Contacts = ({ addToast }) => {
       </div>
 
       <div className="contacts-layout">
-        {/* ── Left pane ── */}
-        <div className="contacts-list-pane">
+        {/* ── List ── */}
+        <div className="contacts-list-pane contacts-list-pane--full">
           {/* Search */}
           <div className="contacts-search">
             <UilSearch size={15} />
@@ -339,8 +224,8 @@ const Contacts = ({ addToast }) => {
                 return (
                   <div
                     key={c.id}
-                    className={`contact-row ${selected?.id === c.id ? "active" : ""}`}
-                    onClick={() => setSelected(c)}
+                    className="contact-row"
+                    onClick={() => onOpenContact(c.id)}
                   >
                     <div className="cr-avatar">{c.firstName[0]}{c.lastName[0]}</div>
                     <div className="cr-info">
@@ -356,30 +241,23 @@ const Contacts = ({ addToast }) => {
                       <span className="cr-badge" style={sc}>{c.status}</span>
                       <span className="cr-date">{fmt(c.createdAt)}</span>
                     </div>
+                    <div className="cr-row-actions">
+                      <button
+                        className="cr-row-btn"
+                        title="Edit"
+                        onClick={(e) => { e.stopPropagation(); openEdit(c); }}
+                      ><UilEdit size={14} /></button>
+                      <button
+                        className="cr-row-btn cr-row-btn--danger"
+                        title="Delete"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(c); }}
+                      ><UilTrashAlt size={14} /></button>
+                    </div>
                   </div>
                 );
               })
             )}
           </div>
-        </div>
-
-        {/* ── Right pane ── */}
-        <div className="contacts-detail-pane">
-          {selected ? (
-            <ContactDetail
-              key={selected.id}
-              contact={selected}
-              onEdit={openEdit}
-              onDelete={handleDelete}
-              onConvert={handleConvert}
-              addToast={addToast}
-            />
-          ) : (
-            <div className="contacts-empty-state">
-              <UilUserCheck size={40} />
-              <p>Select a contact to view details</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -396,3 +274,4 @@ const Contacts = ({ addToast }) => {
 };
 
 export default Contacts;
+export { ContactForm, STATUS_CFG, SOURCE_CFG, fmt };

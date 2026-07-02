@@ -30,6 +30,8 @@ model Organization {
   notes           Note[]
   contacts        Contact[]
   deals           Deal[]
+  callLogs        CallLog[]
+  contactNotes    ContactNote[]
 
   users     User[]
   customers Customer[]
@@ -55,6 +57,8 @@ model User {
   assignedTasks   Task[]   @relation("AssignedTasks")
   createdTasks    Task[]   @relation("CreatedTasks")
   assignedDeals   Deal[]   @relation("AssignedDeals")
+  callLogs        CallLog[]
+  contactNotes    ContactNote[]
 }
 
 model Customer {
@@ -131,6 +135,9 @@ model Task {
   ticket   Ticket? @relation(fields: [ticketId], references: [id])
   ticketId String?
 
+  contact   Contact? @relation(fields: [contactId], references: [id])
+  contactId String?
+
   createdBy   User   @relation("CreatedTasks", fields: [createdById], references: [id])
   createdById String
 }
@@ -176,7 +183,42 @@ model Contact {
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
 
-  deals Deal[]
+  deals        Deal[]
+  tasks        Task[]
+  callLogs     CallLog[]
+  contactNotes ContactNote[]
+}
+
+model CallLog {
+  id        String   @id @default(uuid())
+  outcome   String
+  duration  Int?
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+
+  agent   User?   @relation(fields: [agentId], references: [id])
+  agentId String?
+}
+
+model ContactNote {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+
+  agent   User?   @relation(fields: [agentId], references: [id])
+  agentId String?
 }
 
 model Deal {

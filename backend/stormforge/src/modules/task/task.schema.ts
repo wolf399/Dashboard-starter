@@ -28,6 +28,7 @@ export const schemas = {
       priority:     { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
       assignedToId: { type: 'string', nullable: true },
       ticketId:     { type: 'string', nullable: true },
+      contactId:    { type: 'string', nullable: true },
       createdById:  { type: 'string' },
     },
   },

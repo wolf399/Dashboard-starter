@@ -7,11 +7,17 @@ import useToast from './hooks/useToast';
 import { useState, useEffect } from "react";
 import { logout, getTickets } from './api';
 
+const parseContactId = (pathname) => {
+  const match = pathname.match(/^\/contacts\/([^/]+)\/?$/);
+  return match ? match[1] : null;
+};
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeView, setActiveView] = useState("Dashboard");
   const [activeTicket, setActiveTicket] = useState(null);
   const [tickets, setTickets] = useState([]);
+  const [contactDetailId, setContactDetailId] = useState(null);
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
@@ -28,7 +34,30 @@ function App() {
 
     const token = localStorage.getItem('token');
     if (token) setIsLoggedIn(true);
+
+    const id = parseContactId(window.location.pathname);
+    if (id) {
+      setActiveView("Contacts");
+      setContactDetailId(id);
+    }
   }, []);
+
+  useEffect(() => {
+    const onPopState = () => setContactDetailId(parseContactId(window.location.pathname));
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const openContact = (id) => {
+    window.history.pushState({}, "", `/contacts/${id}`);
+    setActiveView("Contacts");
+    setContactDetailId(id);
+  };
+
+  const closeContactDetail = () => {
+    window.history.pushState({}, "", "/");
+    setContactDetailId(null);
+  };
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -55,8 +84,12 @@ function App() {
   };
 
   const handleMenuSelect = (view) => {
-    if (view === 'Logout') handleLogout();
-    else setActiveView(view);
+    if (view === 'Logout') { handleLogout(); return; }
+    if (contactDetailId) {
+      window.history.pushState({}, "", "/");
+      setContactDetailId(null);
+    }
+    setActiveView(view);
   };
 
   if (!isLoggedIn) {
@@ -78,6 +111,9 @@ function App() {
           tickets={tickets}
           onTicketUpdate={handleTicketUpdate}
           addToast={addToast}
+          contactDetailId={contactDetailId}
+          onOpenContact={openContact}
+          onCloseContactDetail={closeContactDetail}
         />
       </div>
       <Toast toasts={toasts} removeToast={removeToast} />

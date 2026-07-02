@@ -7,6 +7,7 @@ import Analytics from "../Analytics/Analytics";
 import Tasks from "../Tasks/Tasks";
 import Settings from "../Settings/Settings";
 import Contacts from "../Contacts/Contacts";
+import ContactDetail from "../Contacts/ContactDetail";
 import Pipeline from "../Pipeline/Pipeline";
 import "./MainDash.css";
 
@@ -17,7 +18,10 @@ const MainDash = ({
   activeTicket,
   tickets,
   onTicketUpdate,
-  addToast
+  addToast,
+  contactDetailId,
+  onOpenContact,
+  onCloseContactDetail,
 }) => {
   return (
     <div className="MainDash">
@@ -79,7 +83,16 @@ const MainDash = ({
 
       {activeView === "Contacts" && (
         <div className="contacts-view-container">
-          <Contacts addToast={addToast} />
+          {contactDetailId ? (
+            <ContactDetail
+              key={contactDetailId}
+              contactId={contactDetailId}
+              onBack={onCloseContactDetail}
+              addToast={addToast}
+            />
+          ) : (
+            <Contacts addToast={addToast} onOpenContact={onOpenContact} />
+          )}
         </div>
       )}
 

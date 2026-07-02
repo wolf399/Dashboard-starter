@@ -62,6 +62,13 @@
   background: #fafafa;
 }
 
+.contacts-list-pane--full {
+  width: 100%;
+  min-width: 0;
+  border-right: none;
+  background: #fff;
+}
+
 /* Right pane */
 .contacts-detail-pane {
   flex: 1;
@@ -166,6 +173,32 @@
 }
 .contact-row:hover { background: #f1f5f9; }
 .contact-row.active { background: #ede9fe; }
+
+.cr-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.contact-row:hover .cr-row-actions { opacity: 1; }
+
+.cr-row-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.cr-row-btn:hover { background: #f3f4f6; color: #374151; }
+.cr-row-btn--danger:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
 
 .cr-avatar {
   width: 34px;

@@ -130,8 +130,10 @@ export const sendMessage = async (ticketId, body, senderType = 'AGENT') => {
 };
 
 // TASKS
-export const getTasks = async () => {
-  const res = await fetch(`${BASE_URL}/tasks`, { headers: headers() });
+export const getTasks = async ({ contactId } = {}) => {
+  const params = new URLSearchParams();
+  if (contactId) params.set('contactId', contactId);
+  const res = await fetch(`${BASE_URL}/tasks?${params}`, { headers: headers() });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
   return data.tasks;
@@ -396,6 +398,53 @@ export const convertContact = async (id) => {
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
   return data;
+};
+
+export const getContact = async (id) => {
+  const res = await fetch(`${BASE_URL}/contacts/${id}`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const getContactTimeline = async (id) => {
+  const res = await fetch(`${BASE_URL}/contacts/${id}/timeline`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const getContactCalls = async (id) => {
+  const res = await fetch(`${BASE_URL}/contacts/${id}/calls`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data.calls;
+};
+
+export const logContactCall = async (id, body) => {
+  const res = await fetch(`${BASE_URL}/contacts/${id}/calls`, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const getContactNotesList = async (id) => {
+  const res = await fetch(`${BASE_URL}/contacts/${id}/notes`, { headers: headers() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data.notes;
+};
+
+export const addContactNote = async (id, content) => {
+  const res = await fetch(`${BASE_URL}/contacts/${id}/notes`, { method: 'POST', headers: headers(), body: JSON.stringify({ content }) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
+export const deleteContactNote = async (id, noteId) => {
+  const res = await fetch(`${BASE_URL}/contacts/${id}/notes/${noteId}`, { method: 'DELETE', headers: headers() });
+  if (!res.ok) { const data = await res.json(); throw new Error(data.message); }
 };
 
 // ── Deals ──────────────────────────────────────────────────────────

@@ -8,6 +8,7 @@ interface CreateTaskBody {
   priority?: string;
   assignedToId?: string;
   ticketId?: string;
+  contactId?: string;
   createdById: string;
 }
 
@@ -28,8 +29,11 @@ const taskRoutes = async (fastify: FastifyInstance) => {
   fastify.get('/', {
     handler: async (request) => {
       const user = await request.jwtVerify() as any;
+      const { contactId } = request.query as { contactId?: string };
+      const where: any = { organizationId: user.organizationId };
+      if (contactId) where.contactId = contactId;
       const tasks = await fastify.prisma.task.findMany({
-        where: { organizationId: user.organizationId },
+        where,
         orderBy: { createdAt: 'desc' },
         include: { assignedTo: true, createdBy: true, ticket: true },
       });
@@ -55,7 +59,7 @@ const taskRoutes = async (fastify: FastifyInstance) => {
     schema: createTaskSchema,
     handler: async (request, reply) => {
       const user = await request.jwtVerify() as any;
-      const { title, description, dueDate, priority, assignedToId, ticketId, createdById } = request.body;
+      const { title, description, dueDate, priority, assignedToId, ticketId, contactId, createdById } = request.body;
       const task = await fastify.prisma.task.create({
         data: {
           title,
@@ -64,6 +68,7 @@ const taskRoutes = async (fastify: FastifyInstance) => {
           priority,
           assignedToId,
           ticketId,
+          contactId,
           createdById,
           organizationId: user.organizationId,
         },
