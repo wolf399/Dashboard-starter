@@ -17,8 +17,8 @@ const Sidebar = ({ onMenuSelect, openTicketCount = 0 }) => {
     <div className="sidebar">
       {/* Logo */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">S</div>
-        <span className="sidebar-logo-text">Shops<span>CRM</span></span>
+        <div className="sidebar-logo-icon">A</div>
+        <span className="sidebar-logo-text">Agent<span>CRM</span></span>
       </div>
 
       {/* Nav */}

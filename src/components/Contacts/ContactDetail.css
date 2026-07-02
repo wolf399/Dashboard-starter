@@ -48,6 +48,7 @@
   min-width: 280px;
   max-width: 340px;
   border-right: 1px solid #e5e7eb;
+  border-top: 3px solid transparent;
   background: #fff;
   padding: 1.5rem 1.25rem;
   overflow-y: auto;
@@ -157,14 +158,28 @@
   font-weight: 600;
   color: #374151;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
-.cd2-actions button:hover { background: #f9fafb; border-color: #16a34a; color: #16a34a; }
+.cd2-actions button:hover {
+  background: #f0fdf4;
+  border-color: #16a34a;
+  color: #16a34a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.15);
+}
+.cd2-actions button:active { transform: translateY(0); }
 
 .cd2-info-section {
   border-top: 1px solid #f0f0f0;
   padding-top: 14px;
   margin-top: 14px;
+}
+
+.cd2-info-section--shaded {
+  border-top: none;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 12px 14px;
 }
 
 .cd2-info-section h4 {
@@ -297,9 +312,12 @@
   gap: 2px;
   background: #fff;
   border: 1px solid #e5e7eb;
+  border-left: 3px solid #e5e7eb;
   border-radius: 10px;
   padding: 14px;
+  transition: box-shadow 0.15s;
 }
+.ov-stat:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); }
 .ov-stat-value { font-size: 1.3rem; font-weight: 700; color: #111827; }
 .ov-stat-label { font-size: 0.72rem; color: #6b7280; }
 
@@ -351,18 +369,42 @@
 .ov-ticket-date { color: #9ca3af; }
 
 /* ── Timeline (shared: Overview + Activities) ───────────────── */
-.tl-list { display: flex; flex-direction: column; gap: 10px; }
-.tl-row { display: flex; gap: 10px; }
+.tl-list { display: flex; flex-direction: column; }
+.tl-row {
+  display: flex;
+  gap: 12px;
+  position: relative;
+  padding: 10px 10px 18px;
+  margin: 0 -10px;
+  border-radius: 10px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.tl-row:last-child { border-bottom: none; }
+.tl-row:hover { background: #fafafa; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+
+.tl-row:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 25px;
+  top: 42px;
+  bottom: 0;
+  width: 2px;
+  background: #e5e7eb;
+}
+
 .tl-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
-.tl-body { flex: 1; min-width: 0; }
+.tl-body { flex: 1; min-width: 0; padding-top: 2px; }
 .tl-title { font-size: 0.83rem; font-weight: 600; color: #111827; }
 .tl-desc {
   font-size: 0.78rem;
@@ -374,11 +416,33 @@
 }
 .tl-meta {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   font-size: 0.7rem;
   color: #9ca3af;
-  margin-top: 3px;
+  margin-top: 5px;
 }
+.tl-agent {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #6b7280;
+  font-weight: 500;
+}
+.tl-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #94a3b8;
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.tl-meta span[title] { cursor: help; }
 
 /* ── Activities tab ─────────────────────────────────────────── */
 .act-toolbar { margin-bottom: 16px; }

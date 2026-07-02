@@ -21,10 +21,52 @@ const STAGES = [
 ];
 
 const TYPE_ICON = { note: UilNotes, call: UilPhone, deal: UilBriefcase, task: UilClipboardAlt, ticket: UilTicket, email: UilEnvelope };
-const TYPE_COLOR = { note: "#6366f1", call: "#16a34a", deal: "#f59e0b", task: "#3b82f6", ticket: "#a855f7", email: "#0891b2" };
+const TYPE_COLOR = { call: "#16a34a", email: "#2563eb", note: "#7c3aed", task: "#f97316", deal: "#0d9488", ticket: "#64748b" };
 
 const dt = (d) => d ? new Date(d).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
 const money = (v) => v != null ? `$${Number(v).toLocaleString()}` : "—";
+
+const initialsOf = (name) => {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || name[0].toUpperCase();
+};
+
+const timeAgo = (date) => {
+  const diffMs = Date.now() - new Date(date).getTime();
+  const sec = Math.max(0, Math.floor(diffMs / 1000));
+  if (sec < 60) return "Just now";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} minute${min === 1 ? "" : "s"} ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} hour${hr === 1 ? "" : "s"} ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day} day${day === 1 ? "" : "s"} ago`;
+  const month = Math.floor(day / 30);
+  if (month < 12) return `${month} month${month === 1 ? "" : "s"} ago`;
+  const year = Math.floor(month / 12);
+  return `${year} year${year === 1 ? "" : "s"} ago`;
+};
+
+const stripHtml = (html) => {
+  if (!html) return "";
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const previewText = (text, max = 100) => {
+  const clean = stripHtml(text);
+  if (clean.length <= max) return clean;
+  return `${clean.slice(0, max).trim()}...`;
+};
 
 // ── Timeline item row ──────────────────────────────────────────
 const TimelineRow = ({ item }) => {
@@ -35,10 +77,15 @@ const TimelineRow = ({ item }) => {
       <div className="tl-icon" style={{ background: color + "1a", color }}><Icon size={15} /></div>
       <div className="tl-body">
         <div className="tl-title">{item.title}</div>
-        {item.description && <p className="tl-desc">{item.description}</p>}
+        {item.description && <p className="tl-desc">{previewText(item.description)}</p>}
         <div className="tl-meta">
-          {item.agentName && <span>{item.agentName}</span>}
-          <span>{dt(item.createdAt)}</span>
+          {item.agentName && (
+            <span className="tl-agent">
+              <span className="tl-avatar">{initialsOf(item.agentName)}</span>
+              {item.agentName}
+            </span>
+          )}
+          <span title={dt(item.createdAt)}>{timeAgo(item.createdAt)}</span>
         </div>
       </div>
     </div>
@@ -54,10 +101,10 @@ const OverviewTab = ({ contact, tickets, timeline }) => {
   return (
     <div className="ov-tab">
       <div className="ov-stats">
-        <div className="ov-stat"><span className="ov-stat-value">{tickets.length}</span><span className="ov-stat-label">Total Tickets</span></div>
-        <div className="ov-stat"><span className="ov-stat-value">{openTickets.length}</span><span className="ov-stat-label">Open Tickets</span></div>
-        <div className="ov-stat"><span className="ov-stat-value">{deals.length}</span><span className="ov-stat-label">Deals</span></div>
-        <div className="ov-stat"><span className="ov-stat-value">{money(totalDealValue)}</span><span className="ov-stat-label">Total Deal Value</span></div>
+        <div className="ov-stat" style={{ borderLeftColor: "#3b82f6" }}><span className="ov-stat-value">{tickets.length}</span><span className="ov-stat-label">Total Tickets</span></div>
+        <div className="ov-stat" style={{ borderLeftColor: "#16a34a" }}><span className="ov-stat-value">{openTickets.length}</span><span className="ov-stat-label">Open Tickets</span></div>
+        <div className="ov-stat" style={{ borderLeftColor: "#8b5cf6" }}><span className="ov-stat-value">{deals.length}</span><span className="ov-stat-label">Deals</span></div>
+        <div className="ov-stat" style={{ borderLeftColor: "#d4af37" }}><span className="ov-stat-value">{money(totalDealValue)}</span><span className="ov-stat-label">Total Deal Value</span></div>
       </div>
 
       <div className="ov-section">
@@ -479,14 +526,17 @@ const DealsTab = ({ contactId, deals, onCreated, addToast }) => {
   );
 };
 
+const SIDEBAR_STATUS_BORDER = { LEAD: "#3b82f6", QUALIFIED: "#16a34a", CONVERTED: "#6b7280", LOST: "#dc2626" };
+
 // ── Left sidebar (info card) ──────────────────────────────────────
 const ContactSidebar = ({ contact, onEdit, onConvert, onAction }) => {
   const sc = STATUS_CFG[contact.status] || STATUS_CFG.LEAD;
   const src = contact.source ? SOURCE_CFG[contact.source] || SOURCE_CFG.Other : null;
   const initials = (contact.firstName[0] || "") + (contact.lastName[0] || "");
+  const statusBorder = SIDEBAR_STATUS_BORDER[contact.status] || SIDEBAR_STATUS_BORDER.LEAD;
 
   return (
-    <div className="cd2-sidebar">
+    <div className="cd2-sidebar" style={{ borderTopColor: statusBorder }}>
       <button className="cd2-edit-btn" onClick={onEdit}><UilEdit size={14} /> Edit</button>
 
       <div className="cd2-avatar">{initials}</div>
@@ -515,11 +565,12 @@ const ContactSidebar = ({ contact, onEdit, onConvert, onAction }) => {
         <button onClick={() => onAction("Tasks")}><UilClipboardAlt size={16} /><span>Task</span></button>
       </div>
 
-      <div className="cd2-info-section">
+      <div className="cd2-info-section cd2-info-section--shaded">
         <h4>Contact Info</h4>
         {contact.email && <div className="cd2-info-row"><UilEnvelope size={13} /><span>{contact.email}</span></div>}
         {contact.phone && <div className="cd2-info-row"><UilPhone size={13} /><span>{contact.phone}</span></div>}
         {contact.company && <div className="cd2-info-row"><UilBuilding size={13} /><span>{contact.company}</span></div>}
+        {!contact.email && !contact.phone && !contact.company && <p className="cd2-empty">No contact info.</p>}
       </div>
 
       <div className="cd2-info-section">
