@@ -3,10 +3,10 @@ import "./Auth.css";
 import GoogleButton from "./GoogleButton";
 import { login } from "../../api";
 
-const Login = ({ onSuccess, onSwitchToSignup }) => {
+const Login = ({ onSuccess, onSwitchToSignup, initialError = "" }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -42,7 +42,7 @@ const Login = ({ onSuccess, onSwitchToSignup }) => {
 
         {error && <div className="auth-error">{error}</div>}
 
-        <GoogleButton onSuccess={onSuccess} onError={setError} />
+        <GoogleButton onError={setError} />
 
         <div className="auth-divider"><span>or</span></div>
 

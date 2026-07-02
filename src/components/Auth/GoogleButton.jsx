@@ -1,47 +1,26 @@
-import { useRef, useState } from "react";
-import { getGoogleClientId, loginWithGoogle } from "../../api";
+import { useState } from "react";
+import { getGoogleClientId } from "../../api";
 
-const GoogleButton = ({ onSuccess, onError, label = "Continue with Google" }) => {
+const buildGoogleAuthUrl = (clientId) => {
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: window.location.origin,
+    response_type: "code",
+    scope: "openid email profile",
+    access_type: "online",
+  });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+};
+
+const GoogleButton = ({ onError, label = "Continue with Google" }) => {
   const [loading, setLoading] = useState(false);
-  const clientRef = useRef(null);
-
-  const initClient = async () => {
-    if (clientRef.current) return clientRef.current;
-    const { clientId } = await getGoogleClientId();
-    const client = window.google.accounts.oauth2.initCodeClient({
-      client_id: clientId,
-      scope: "openid email profile",
-      ux_mode: "popup",
-      callback: async (response) => {
-        if (!response || response.error) {
-          setLoading(false);
-          onError?.("Google sign-in was cancelled.");
-          return;
-        }
-        try {
-          const data = await loginWithGoogle(response.code);
-          onSuccess?.(data);
-        } catch (err) {
-          onError?.(err.message || "Google sign-in failed.");
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-    clientRef.current = client;
-    return client;
-  };
 
   const handleClick = async () => {
     if (loading) return;
-    if (!window.google?.accounts?.oauth2) {
-      onError?.("Google sign-in isn't available right now. Please try again in a moment.");
-      return;
-    }
     setLoading(true);
     try {
-      const client = await initClient();
-      client.requestCode();
+      const { clientId } = await getGoogleClientId();
+      window.location.href = buildGoogleAuthUrl(clientId);
     } catch (err) {
       setLoading(false);
       onError?.("Could not start Google sign-in.");
@@ -56,7 +35,7 @@ const GoogleButton = ({ onSuccess, onError, label = "Continue with Google" }) =>
         <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
         <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
       </svg>
-      {loading ? "Connecting..." : label}
+      {loading ? "Redirecting..." : label}
     </button>
   );
 };

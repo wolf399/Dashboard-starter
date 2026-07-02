@@ -16,13 +16,13 @@ const getPasswordStrength = (password) => {
   return { score: capped, label: labels[capped] };
 };
 
-const Signup = ({ onSuccess, onSwitchToLogin, inviteToken }) => {
+const Signup = ({ onSuccess, onSwitchToLogin, inviteToken, initialError = "" }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [orgName, setOrgName] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [loading, setLoading] = useState(false);
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
@@ -75,7 +75,7 @@ const Signup = ({ onSuccess, onSwitchToLogin, inviteToken }) => {
           </div>
         )}
 
-        <GoogleButton onSuccess={onSuccess} onError={setError} />
+        <GoogleButton onError={setError} />
 
         <div className="auth-divider"><span>or</span></div>
 

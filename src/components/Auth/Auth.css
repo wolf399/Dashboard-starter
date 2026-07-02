@@ -18,6 +18,12 @@
   padding: 40px 36px;
 }
 
+.auth-loading {
+  font-size: 15px;
+  font-weight: 500;
+  color: #374151;
+}
+
 .auth-brand {
   display: flex;
   align-items: center;

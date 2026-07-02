@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./LandingPage.css";
 import Login from "../Auth/Login";
 import Signup from "../Auth/Signup";
+import { loginWithGoogle } from "../../api";
 
 const FeatureIcon = ({ type, accent, bg }) => {
   const content = {
@@ -76,23 +77,60 @@ const LandingPage = ({ onEnterApp }) => {
   const [mode, setMode] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const [inviteToken, setInviteToken] = useState(null);
+  const [googleAuthLoading, setGoogleAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handleScroll);
 
     const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const oauthError = params.get("error");
     const token = params.get("invite");
-    if (token && token.length < 200) {
+
+    if (code) {
+      setGoogleAuthLoading(true);
+      loginWithGoogle(code, window.location.origin)
+        .then(() => {
+          onEnterApp();
+        })
+        .catch((err) => {
+          setAuthError(err.message || "Google sign-in failed. Please try again.");
+          setMode("login");
+        })
+        .finally(() => {
+          setGoogleAuthLoading(false);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+    } else if (oauthError) {
+      setAuthError("Google sign-in was cancelled.");
+      setMode("login");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (token && token.length < 200) {
       setInviteToken(token);
       setMode("register");
     }
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [onEnterApp]);
+
+  if (googleAuthLoading) {
+    return (
+      <div className="auth-page">
+        <div className="auth-loading">Signing you in with Google...</div>
+      </div>
+    );
+  }
 
   if (mode === "login") {
-    return <Login onSuccess={onEnterApp} onSwitchToSignup={() => setMode("register")} />;
+    return (
+      <Login
+        onSuccess={onEnterApp}
+        onSwitchToSignup={() => setMode("register")}
+        initialError={authError}
+      />
+    );
   }
 
   if (mode === "register") {
@@ -101,6 +139,7 @@ const LandingPage = ({ onEnterApp }) => {
         onSuccess={onEnterApp}
         onSwitchToLogin={() => setMode("login")}
         inviteToken={inviteToken}
+        initialError={authError}
       />
     );
   }

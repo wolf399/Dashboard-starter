@@ -2,19 +2,21 @@ import { FastifyInstance } from 'fastify';
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
+const DEFAULT_REDIRECT_URI = 'https://dashboard-starter-self.vercel.app';
 
 interface GoogleAuthBody {
   code: string;
+  redirectUri?: string;
 }
 
 const generateSlug = (name: string) => {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Math.random().toString(36).slice(2, 7);
 };
 
-// Exchange an authorization code obtained via Google Identity Services'
-// popup code flow (ux_mode: 'popup') for tokens. Popup-flow clients use the
-// literal string "postmessage" as their redirect_uri.
-const exchangeCode = async (code: string) => {
+// Exchange an authorization code obtained via the browser-redirect OAuth
+// flow for tokens. redirect_uri must exactly match the one used to build
+// the consent-screen URL on the frontend (its own origin).
+const exchangeCode = async (code: string, redirectUri: string) => {
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -22,7 +24,7 @@ const exchangeCode = async (code: string) => {
       code,
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
-      redirect_uri: 'postmessage',
+      redirect_uri: redirectUri,
       grant_type: 'authorization_code',
     }),
   });
@@ -44,12 +46,12 @@ const googleAuthRoutes = async (fastify: FastifyInstance) => {
   // POST /api/auth/google — handles the Google OAuth callback (authorization code)
   fastify.post<{ Body: GoogleAuthBody }>('/google', async (request, reply) => {
     try {
-      const { code } = request.body || ({} as GoogleAuthBody);
+      const { code, redirectUri } = request.body || ({} as GoogleAuthBody);
       if (!code) {
         return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Missing authorization code' });
       }
 
-      const tokens: any = await exchangeCode(code);
+      const tokens: any = await exchangeCode(code, redirectUri || DEFAULT_REDIRECT_URI);
       if (!tokens.access_token) {
         fastify.log.error(tokens);
         return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Google authentication failed' });
