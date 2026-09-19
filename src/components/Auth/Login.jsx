@@ -22,6 +22,7 @@ const Login = ({ onSuccess, onSwitchToSignup, initialError = "" }) => {
     try {
       await login(email, password);
       onSuccess();
+      window.location.href = '/';
     } catch (err) {
       setError(err.message || "Something went wrong.");
     } finally {
