@@ -26,13 +26,13 @@ function App() {
 
     // If invite link, force show register form
     if (inviteToken) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
       setIsLoggedIn(false);
       return;
     }
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token) setIsLoggedIn(true);
 
     const id = parseContactId(window.location.pathname);

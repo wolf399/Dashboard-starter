@@ -1,6 +1,6 @@
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
-const getToken = () => localStorage.getItem('token');
+const getToken = () => sessionStorage.getItem('token');
 
 const headers = () => ({
   'Content-Type': 'application/json',
@@ -16,8 +16,8 @@ export const login = async (email, password) => {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('user', JSON.stringify(data.user));
+  sessionStorage.setItem('token', data.token);
+  sessionStorage.setItem('user', JSON.stringify(data.user));
   return data;
 };
 
@@ -29,14 +29,14 @@ export const register = async (name, email, password, role = 'AGENT', inviteToke
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('user', JSON.stringify(data.user));
+  sessionStorage.setItem('token', data.token);
+  sessionStorage.setItem('user', JSON.stringify(data.user));
   return data;
 };
 
 export const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('user');
 };
 
 export const getGoogleClientId = async () => {
@@ -54,8 +54,8 @@ export const loginWithGoogle = async (code, redirectUri) => {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('user', JSON.stringify(data.user));
+  sessionStorage.setItem('token', data.token);
+  sessionStorage.setItem('user', JSON.stringify(data.user));
   return data;
 };
 

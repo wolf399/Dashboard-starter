@@ -196,7 +196,7 @@ const CannedResponsesSection = ({ addToast }) => {
   const [form, setForm] = useState({ title: '', body: '' });
   const [saving, setSaving] = useState(false);
 
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
 
   const fetchResponses = async () => {
     try {
@@ -337,7 +337,7 @@ const CannedResponsesSection = ({ addToast }) => {
 };
 
 const Settings = ({ addToast }) => {
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}");
   const [activeTab, setActiveTab] = useState("profile");
 
   const [profileForm, setProfileForm] = useState({
@@ -362,7 +362,7 @@ const Settings = ({ addToast }) => {
     if (!profileForm.name.trim()) { addToast("Name is required", "error"); return; }
     setSavingProfile(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const res = await fetch(`${BASE_URL}/users/${currentUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -370,7 +370,7 @@ const Settings = ({ addToast }) => {
       });
       if (!res.ok) throw new Error("Failed to update profile");
       const updatedUser = { ...currentUser, name: profileForm.name, email: profileForm.email };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      sessionStorage.setItem("user", JSON.stringify(updatedUser));
       addToast("Profile updated successfully!", "success");
     } catch (err) {
       addToast(err.message || "Failed to update profile", "error");
@@ -385,7 +385,7 @@ const Settings = ({ addToast }) => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) { addToast("Passwords don't match", "error"); return; }
     setSavingPassword(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       const res = await fetch(`${BASE_URL}/users/${currentUser.id}/password`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
