@@ -1,4 +1,5 @@
 import './App.css';
+import { Analytics } from '@vercel/analytics/react';
 import Sidebar from './components/Sidebar/Sidebar';
 import MainDash from './components/MainDash/MainDash';
 import LandingPage from './components/LandingPage/LandingPage';
@@ -117,6 +118,7 @@ function App() {
         />
       </div>
       <Toast toasts={toasts} removeToast={removeToast} />
+      <Analytics />
     </div>
   );
 }
