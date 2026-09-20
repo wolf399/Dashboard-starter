@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import cron from 'node-cron';
 
 const REDIRECT_URI = 'https://agent-crm-backend.vercel.app/api/gmail/callback';
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
@@ -342,4 +343,41 @@ export async function checkGmailForOrg(org: any, fastify: any) {
   }
 }
 
-export async function startGmailPoller(fastify: any) {}
+export async function startGmailPoller(fastify: any) {
+  try {
+    // Run Gmail sync every 5 minutes (*/5 * * * *)
+    cron.schedule('*/5 * * * *', async () => {
+      try {
+        console.log('[Gmail Poller] Starting email sync...');
+
+        // Get all organizations with Gmail connected
+        const orgs = await fastify.prisma.organization.findMany({
+          where: {
+            gmailConnected: true,
+            gmailAccessToken: { not: null },
+          },
+        });
+
+        console.log(`[Gmail Poller] Found ${orgs.length} organizations to sync`);
+
+        // Sync Gmail for each organization
+        for (const org of orgs) {
+          try {
+            await checkGmailForOrg(org, fastify);
+          } catch (err: any) {
+            console.error(`[Gmail Poller] Error syncing ${org.gmailEmail}:`, err.message);
+            // Continue with next org instead of crashing
+          }
+        }
+
+        console.log('[Gmail Poller] Email sync completed');
+      } catch (err: any) {
+        console.error('[Gmail Poller] Unexpected error:', err.message);
+      }
+    });
+
+    console.log('[Gmail Poller] Background job started (runs every 5 minutes)');
+  } catch (err: any) {
+    console.error('[Gmail Poller] Failed to start:', err.message);
+  }
+}
