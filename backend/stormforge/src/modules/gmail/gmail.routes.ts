@@ -32,6 +32,20 @@ const getTokens = async (code: string) => {
   return res.json();
 };
 
+const refreshAccessToken = async (refreshToken: string) => {
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  });
+  return res.json();
+};
+
 const getUserEmail = async (accessToken: string) => {
   const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -183,20 +197,62 @@ export default async function gmailRoutes(fastify: FastifyInstance) {
 
 export async function checkGmailForOrg(org: any, fastify: any) {
   try {
+    let accessToken = org.gmailAccessToken;
+
+    // Helper function to make Gmail API calls with auto-refresh on 401
+    const gmailFetchWithRefresh = async (path: string, options: any = {}): Promise<any> => {
+      try {
+        return await gmailFetch(accessToken, path, options);
+      } catch (err: any) {
+        // If we get a 401 (Unauthorized), try refreshing the token
+        if (err.message.includes('401') && org.gmailRefreshToken) {
+          console.log(`Token expired for ${org.gmailEmail}, attempting refresh...`);
+          try {
+            const newTokens = await refreshAccessToken(org.gmailRefreshToken);
+
+            if (newTokens.access_token) {
+              // Update the in-memory token for this function
+              accessToken = newTokens.access_token;
+
+              // Update the database with the new token
+              const expiryDate = newTokens.expires_in
+                ? new Date(Date.now() + newTokens.expires_in * 1000)
+                : null;
+
+              await fastify.prisma.organization.update({
+                where: { id: org.id },
+                data: {
+                  gmailAccessToken: newTokens.access_token,
+                  gmailTokenExpiry: expiryDate,
+                },
+              });
+
+              console.log(`Token refreshed successfully for ${org.gmailEmail}`);
+
+              // Retry the original request with the new token
+              return await gmailFetch(accessToken, path, options);
+            }
+          } catch (refreshErr: any) {
+            console.error(`Failed to refresh token for ${org.gmailEmail}:`, refreshErr.message);
+            throw new Error(`Token refresh failed: ${refreshErr.message}`);
+          }
+        }
+        throw err;
+      }
+    };
+
     const afterDate = org.gmailTokenExpiry
       ? Math.floor(new Date(org.gmailTokenExpiry).getTime() / 1000) - (90 * 24 * 60 * 60)
       : Math.floor(Date.now() / 1000) - (24 * 60 * 60);
 
-    const listData = await gmailFetch(
-      org.gmailAccessToken,
+    const listData = await gmailFetchWithRefresh(
       `/messages?maxResults=10&q=is:unread+in:inbox+after:${afterDate}`
     );
     const messages = (listData as any).messages || [];
     console.log(`Gmail: ${messages.length} unread for ${org.gmailEmail}`);
 
     for (const msg of messages) {
-      const full = await gmailFetch(
-        org.gmailAccessToken,
+      const full = await gmailFetchWithRefresh(
         `/messages/${msg.id}?format=full`
       );
 
@@ -211,14 +267,14 @@ export async function checkGmailForOrg(org: any, fastify: any) {
       const fromName   = from.replace(/<.+>/, '').trim() || fromEmail;
 
       if (!fromEmail || fromEmail.toLowerCase() === org.gmailEmail?.toLowerCase()) {
-        await gmailFetch(org.gmailAccessToken, `/messages/${msg.id}/modify`, {
+        await gmailFetchWithRefresh(`/messages/${msg.id}/modify`, {
           method: 'POST',
           body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
         });
         continue;
       }
 
-      await gmailFetch(org.gmailAccessToken, `/messages/${msg.id}/modify`, {
+      await gmailFetchWithRefresh(`/messages/${msg.id}/modify`, {
         method: 'POST',
         body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
       });
