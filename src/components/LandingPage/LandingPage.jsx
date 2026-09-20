@@ -73,7 +73,41 @@ const CheckIcon = ({ color = "#16a34a" }) => (
   </svg>
 );
 
-const LandingPage = ({ onEnterApp }) => {
+/* Generic, non-brand integration glyphs — abstract shapes standing in for
+   email / chat / messaging / broadcast channels, not any specific logo. */
+const IntegrationIcon = ({ type, color }) => {
+  const paths = {
+    mail: (
+      <>
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="M3 7l9 6 9-6" />
+      </>
+    ),
+    chat: (
+      <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" />
+    ),
+    send: <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />,
+    bubble: (
+      <>
+        <circle cx="9" cy="9" r="4" />
+        <circle cx="16" cy="15" r="4" />
+      </>
+    ),
+    bell: (
+      <>
+        <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 01-3.46 0" />
+      </>
+    ),
+  };
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {paths[type]}
+    </svg>
+  );
+};
+
+const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
   const [mode, setMode] = useState(null);
   const [scrolled, setScrolled] = useState(false);
   const [inviteToken, setInviteToken] = useState(null);
@@ -136,7 +170,7 @@ const LandingPage = ({ onEnterApp }) => {
   if (mode === "register") {
     return (
       <Signup
-        onSuccess={onEnterApp}
+        onSuccess={onSignupSuccess || onEnterApp}
         onSwitchToLogin={() => setMode("login")}
         inviteToken={inviteToken}
         initialError={authError}
@@ -180,6 +214,14 @@ const LandingPage = ({ onEnterApp }) => {
     },
   ];
 
+  const integrations = [
+    { type: "mail", label: "Gmail", color: "#16a34a" },
+    { type: "chat", label: "Slack", color: "#3b82f6" },
+    { type: "bubble", label: "WhatsApp", color: "#22c55e" },
+    { type: "send", label: "Telegram", color: "#0ea5e9" },
+    { type: "bell", label: "Alerts", color: "#a855f7" },
+  ];
+
   return (
     <div className="landing">
       {/* Nav */}
@@ -190,74 +232,250 @@ const LandingPage = ({ onEnterApp }) => {
             <span>Agent<strong>CRM</strong></span>
           </div>
           <div className="nav-links">
+            <span className="nav-dropdown">
+              Products
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+            </span>
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
             <a href="#testimonials">Reviews</a>
+            <a href="#contact">Contact us</a>
           </div>
           <div className="nav-actions">
             <button className="nav-login" onClick={() => setMode("login")}>Log in</button>
-            <button className="nav-signup" onClick={() => setMode("register")}>Get Started Free</button>
+            <button className="nav-signup" onClick={() => setMode("register")}>Create account</button>
           </div>
         </div>
       </nav>
 
       {/* Hero */}
       <section className="hero">
-        <div className="hero-badge">Trusted by 2,000+ support teams</div>
         <h1 className="hero-title">
-          Support that feels like<br />
-          <span className="hero-highlight">magic</span> to your customers
+          All-in-One CRM<br />
+          for <span className="hero-highlight">Support Teams</span>
         </h1>
         <p className="hero-sub">
-          AgentCRM brings all your customer conversations, tasks, and analytics into one beautiful workspace. Respond faster, resolve smarter, retain longer.
+          Manage customer conversations, sales pipelines, and support tickets in one powerful CRM platform built for modern teams.
         </p>
         <div className="hero-ctas">
-          <button className="hero-cta-primary" onClick={() => setMode("register")}>Start for free — no credit card</button>
-          <button className="hero-cta-secondary" onClick={() => setMode("login")}>Sign in →</button>
+          <button className="hero-cta-primary" onClick={() => setMode("register")}>Start your free trial</button>
+          <button className="hero-cta-secondary" onClick={() => setMode("login")}>See product demo</button>
         </div>
-        <div className="hero-social-proof">
-          <div className="hero-avatars">
-            {["A", "B", "C", "D", "E"].map((l, i) => (
-              <div key={i} className="hero-avatar" style={{ zIndex: 5 - i, background: ["#16a34a","#3b82f6","#a855f7","#f97316","#ef4444"][i] }}>{l}</div>
-            ))}
-          </div>
-          <span>Join <strong>2,000+</strong> teams already using AgentCRM</span>
+        <div className="hero-tagline">
+          <span>SMART INBOX</span>
+          <i />
+          <span>AI-POWERED REPLIES</span>
+          <i />
+          <span>24/7 CUSTOMER SUPPORT</span>
         </div>
-        <div className="hero-preview">
-          <div className="preview-bar"><span /><span /><span /></div>
-          <div className="preview-body">
-            <div className="preview-sidebar">
-              {["Dashboard","Inbox","Customers","Tasks"].map((item, i) => (
-                <div key={i} className={`preview-nav-item ${i === 1 ? "active" : ""}`}>{item}</div>
-              ))}
-            </div>
-            <div className="preview-content">
-              <div className="preview-ticket">
-                <div className="preview-ticket-avatar">J</div>
-                <div className="preview-ticket-body">
-                  <div className="preview-ticket-name">Jenny Wilson</div>
-                  <div className="preview-ticket-msg">I was charged twice for my order...</div>
-                </div>
-                <div className="preview-ticket-badge open">OPEN</div>
-              </div>
-              <div className="preview-ticket">
-                <div className="preview-ticket-avatar" style={{background:"#3b82f6"}}>D</div>
-                <div className="preview-ticket-body">
-                  <div className="preview-ticket-name">David Martinez</div>
-                  <div className="preview-ticket-msg">Login error on mobile app</div>
-                </div>
-                <div className="preview-ticket-badge pending">PENDING</div>
-              </div>
-              <div className="preview-ticket">
-                <div className="preview-ticket-avatar" style={{background:"#a855f7"}}>R</div>
-                <div className="preview-ticket-body">
-                  <div className="preview-ticket-name">Rachel Green</div>
-                  <div className="preview-ticket-msg">Issue with order #12345</div>
-                </div>
-                <div className="preview-ticket-badge closed">CLOSED</div>
-              </div>
+
+        <div className="hero-laptop-wrap">
+          <div className="floating-card rating-card">
+            <div className="floating-stars">★★★★★</div>
+            <div className="floating-card-text">
+              <strong>Over 2,000+</strong>
+              <span>teams already using AgentCRM</span>
             </div>
           </div>
+
+          <div className="floating-card score-card">
+            <div className="score-value">98%</div>
+            <div className="floating-card-text">
+              <strong>Customer Satisfaction</strong>
+              <span>Based on last quarter</span>
+            </div>
+          </div>
+
+          <div className="product-window">
+            <div className="pw-titlebar">
+              <div className="window-dots"><span /><span /><span /></div>
+              <div className="pw-url">app.agentcrm.company / inbox</div>
+              <div className="pw-agent-status"><i className="status-dot" />Sarah K. · Senior Agent · Online</div>
+            </div>
+
+            <div className="pw-body">
+              {/* icon rail */}
+              <div className="pw-rail">
+                {[
+                  { icon: "inbox", label: "Inbox", active: true },
+                  { icon: "task", label: "Tickets" },
+                  { icon: "users", label: "Contacts" },
+                  { icon: "sparkle", label: "KB" },
+                  { icon: "chart", label: "Analytics" },
+                ].map((item, i) => (
+                  <div key={i} className={`pw-rail-item ${item.active ? "active" : ""}`}>
+                    <FeatureIcon type={item.icon} accent={item.active ? "#16a34a" : "#64748b"} bg="transparent" />
+                  </div>
+                ))}
+              </div>
+
+              {/* ticket list */}
+              <div className="pw-list">
+                <div className="pw-list-header">MY TICKETS · 12</div>
+                <div className="pw-list-item active">
+                  <span className="pw-chip email">EMAIL</span>
+                  <div className="pw-list-name">Jenny Wilson</div>
+                  <div className="pw-list-snippet">Order #4192 hasn't arrived, any update?</div>
+                </div>
+                <div className="pw-list-item">
+                  <span className="pw-chip chat">CHAT</span>
+                  <div className="pw-list-name">David Martinez</div>
+                  <div className="pw-list-snippet">Can't log into the mobile app</div>
+                </div>
+                <div className="pw-list-item">
+                  <span className="pw-chip whatsapp">WHATSAPP</span>
+                  <div className="pw-list-name">Rachel Green</div>
+                  <div className="pw-list-snippet">Refund status on order #12345</div>
+                </div>
+                <div className="pw-list-item">
+                  <span className="pw-chip email">EMAIL</span>
+                  <div className="pw-list-name">Omar Said</div>
+                  <div className="pw-list-snippet">Invoice copy needed for renewal</div>
+                </div>
+              </div>
+
+              {/* conversation */}
+              <div className="pw-thread">
+                <div className="pw-thread-header">
+                  <div className="pw-thread-avatar">J</div>
+                  <div className="pw-thread-title">
+                    <strong>Jenny Wilson</strong>
+                    <span>#4,192 · EN-US</span>
+                  </div>
+                </div>
+                <div className="pw-tags">
+                  <span className="pw-tag">INTENT · order_status</span>
+                  <span className="pw-tag negative">SENTIMENT · negative</span>
+                  <span className="pw-tag">TIER · pro</span>
+                </div>
+
+                <div className="pw-msg customer">
+                  <span className="pw-msg-meta">Customer · 09:14</span>
+                  Hey, my order was supposed to arrive 3 days ago. Any update?
+                </div>
+
+                <div className="pw-ai-card">
+                  <div className="pw-ai-card-label"><span className="ai-dot">AI</span> AI agent · acted</div>
+                  <p>Looked up order #4192 → delayed at regional hub. Reissued delivery and applied a $10 goodwill credit.</p>
+                  <div className="pw-ai-checklist">✓ Order updated · delivery reissued · credit applied</div>
+                </div>
+
+                <div className="pw-msg customer">
+                  <span className="pw-msg-meta">Customer · 09:16</span>
+                  This is the second time this has happened...
+                </div>
+
+                <div className="pw-escalate">⇄ Escalated — repeat complaint. Matched to Sarah K. (support · 28% load)</div>
+
+                <div className="pw-msg agent">
+                  <span className="pw-msg-meta">Sarah K. · agent</span>
+                  I'm really sorry about this, Jenny — that's not the experience we want you to have...
+                </div>
+              </div>
+
+              {/* co-pilot */}
+              <div className="pw-copilot">
+                <div className="pw-copilot-header"><span className="ai-dot">AI</span> Co-Pilot</div>
+
+                <div className="pw-copilot-card">
+                  <div className="pw-copilot-label">Suggested reply</div>
+                  <p>Your order was delayed at our regional hub. I've reissued delivery for tomorrow and added a $10 credit to your account for the inconvenience.</p>
+                  <div className="pw-copilot-actions">
+                    <button className="pw-btn primary">Insert</button>
+                    <button className="pw-btn">Rewrite</button>
+                  </div>
+                </div>
+
+                <div className="pw-copilot-card">
+                  <div className="pw-copilot-label">Knowledge source</div>
+                  <p className="pw-source-title">Delivery Delay &amp; Goodwill Policy · v3.1</p>
+                  <p className="pw-source-sub">Same article served the AI agent above.</p>
+                </div>
+
+                <div className="pw-copilot-card">
+                  <div className="pw-copilot-label">Applied automatically</div>
+                  <div className="pw-kv"><span>Label</span><strong className="chip">delivery-delay</strong></div>
+                  <div className="pw-kv"><span>Status</span><strong>Escalated</strong></div>
+                  <div className="pw-kv"><span>Follow-up</span><strong>24h</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Statement */}
+      <section className="statement">
+        <h2>
+          We help support teams reduce chaos and build stronger customer relationships through better Customer Management.
+        </h2>
+        <p>
+          AgentCRM empowers teams to unlock the value of every conversation. Our platform helps you manage relationships, streamline workflows, and deliver consistent customer experiences across every touchpoint — because customer experience matters, and every business serves customers.
+        </p>
+      </section>
+
+      {/* Integrations */}
+      <section className="integrations">
+        <div className="integrations-copy">
+          <div className="section-label">Integrations</div>
+          <h2 className="section-title">Sync with Powerful Integrations</h2>
+          <p className="section-sub" style={{ marginBottom: "2rem" }}>
+            AgentCRM brings your support tools into one app. Connect email, chat, and messaging channels. Reduce manual work, keep your team aligned, and reply faster with everything connected.
+          </p>
+          <button className="hero-cta-primary" onClick={() => setMode("register")}>View all integrations</button>
+        </div>
+        <div className="integrations-orbit">
+          <div className="orbit-center">
+            <div className="nav-logo-icon large">A</div>
+          </div>
+          {integrations.map((item, i) => (
+            <div key={i} className={`orbit-icon orbit-icon-${i}`} style={{ color: item.color }}>
+              <IntegrationIcon type={item.type} color={item.color} />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Dark CTA band */}
+      <section className="cta-band">
+        <div className="cta-band-copy">
+          <h2>Be More Powerful with AgentCRM</h2>
+          <p>AgentCRM is an all-in-one CRM built for support teams. AgentCRM helps you organize data, automate replies, and reply faster without added complexity.</p>
+          <button className="hero-cta-secondary light" onClick={() => setMode("login")}>See product demo</button>
+        </div>
+        <div className="cta-band-card">
+          <div className="cta-card-header">
+            <span>Today's Tickets</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" /></svg>
+          </div>
+          <div className="cta-card-row">
+            <div className="cta-card-icon"><IntegrationIcon type="mail" color="#16a34a" /></div>
+            <div className="cta-card-text">
+              <strong>Order delayed — Jenny W.</strong>
+              <span>Opened 2 minutes ago</span>
+            </div>
+          </div>
+          <div className="cta-card-row">
+            <div className="cta-card-icon"><IntegrationIcon type="chat" color="#16a34a" /></div>
+            <div className="cta-card-text">
+              <strong>Renewal call — Flowmint</strong>
+              <span>Scheduled tomorrow, 15:30</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trusted */}
+      <section className="trust-section">
+        <h2 className="section-title">Trusted CRM Software by Growing Support Teams</h2>
+        <p className="section-sub" style={{ margin: "0 auto 3rem" }}>
+          AgentCRM helps support teams manage customer relationships, streamline workflows, and deliver consistent customer experiences across every channel.
+        </p>
+        <p className="trusted-label">Trusted by teams at</p>
+        <div className="trusted-logos">
+          {["Flowmint", "Stacklabs", "Orbio", "Meridian", "Crestline", "Aether"].map((name, i) => (
+            <span key={i} className="trusted-logo">{name}</span>
+          ))}
         </div>
       </section>
 
@@ -274,16 +492,6 @@ const LandingPage = ({ onEnterApp }) => {
             <span>{s.label}</span>
           </div>
         ))}
-      </div>
-
-      {/* Trusted by */}
-      <div className="trusted-section">
-        <p className="trusted-label">Trusted by teams at</p>
-        <div className="trusted-logos">
-          {["Flowmint", "Stacklabs", "Orbio", "Meridian", "Crestline", "Aether"].map((name, i) => (
-            <span key={i} className="trusted-logo">{name}</span>
-          ))}
-        </div>
       </div>
 
       {/* Features */}
@@ -359,7 +567,7 @@ const LandingPage = ({ onEnterApp }) => {
       </section>
 
       {/* Footer */}
-      <footer className="landing-footer">
+      <footer className="landing-footer" id="contact">
         <div className="footer-inner">
           <div className="footer-brand">
             <div className="footer-logo">

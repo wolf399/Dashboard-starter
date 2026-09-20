@@ -4,6 +4,7 @@ import cron from 'node-cron';
 const REDIRECT_URI = 'https://agent-crm-backend.vercel.app/api/gmail/callback';
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://agentcrm.company';
 
 const getAuthUrl = (state: string) => {
   const params = new URLSearchParams({
@@ -159,7 +160,7 @@ export default async function gmailRoutes(fastify: FastifyInstance) {
       },
     });
 
-    return reply.redirect('https://dashboard-starter-self.vercel.app?gmailConnected=true');
+    return reply.redirect(`${FRONTEND_URL}?gmailConnected=true`);
   });
 
   fastify.get('/status', async (request: any, reply: any) => {

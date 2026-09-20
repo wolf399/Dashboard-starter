@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import Sidebar from './components/Sidebar/Sidebar';
 import MainDash from './components/MainDash/MainDash';
 import LandingPage from './components/LandingPage/LandingPage';
+import Onboarding from './components/Onboarding/Onboarding';
 import Toast from './components/Toast/Toast';
 import useToast from './hooks/useToast';
 import { useState, useEffect } from "react";
@@ -13,8 +14,13 @@ const parseContactId = (pathname) => {
   return match ? match[1] : null;
 };
 
+const isOnboardingDone = () => {
+  try { return localStorage.getItem("agentcrm_onboarding_done") === "1"; } catch (_) { return false; }
+};
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [activeView, setActiveView] = useState("Dashboard");
   const [activeTicket, setActiveTicket] = useState(null);
   const [tickets, setTickets] = useState([]);
@@ -24,6 +30,7 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const inviteToken = params.get("invite");
+    const gmailConnected = params.get("gmailConnected") === "true";
 
     // If invite link, force show register form
     if (inviteToken) {
@@ -34,7 +41,14 @@ function App() {
     }
 
     const token = sessionStorage.getItem('token');
-    if (token) setIsLoggedIn(true);
+    if (token) {
+      setIsLoggedIn(true);
+      // Returning from the Gmail OAuth redirect mid-onboarding — resume the
+      // wizard instead of dropping the user on a bare dashboard.
+      if (gmailConnected && !isOnboardingDone()) {
+        setShowOnboarding(true);
+      }
+    }
 
     const id = parseContactId(window.location.pathname);
     if (id) {
@@ -94,7 +108,19 @@ function App() {
   };
 
   if (!isLoggedIn) {
-    return <LandingPage onEnterApp={() => setIsLoggedIn(true)} />;
+    return (
+      <LandingPage
+        onEnterApp={() => setIsLoggedIn(true)}
+        onSignupSuccess={() => {
+          setIsLoggedIn(true);
+          if (!isOnboardingDone()) setShowOnboarding(true);
+        }}
+      />
+    );
+  }
+
+  if (showOnboarding) {
+    return <Onboarding onFinish={() => setShowOnboarding(false)} />;
   }
 
   return (

@@ -29,7 +29,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 
 .auth-logo-icon {
@@ -53,6 +53,40 @@
 
 .auth-brand strong {
   color: #16a34a;
+}
+
+/* ── Step progress (Signup only) ── */
+.auth-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.auth-progress-step {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-progress-step.active {
+  background: #16a34a;
+  color: #fff;
+}
+
+.auth-progress i {
+  width: 16px;
+  height: 1px;
+  background: #e5e7eb;
+  font-style: normal;
 }
 
 .auth-title {
@@ -175,6 +209,21 @@
 
 .auth-input::placeholder {
   color: #9ca3af;
+}
+
+.auth-input.invalid {
+  border-color: #ef4444;
+}
+
+.auth-input.invalid:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.auth-field-error {
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 5px;
+  font-weight: 500;
 }
 
 .auth-forgot {

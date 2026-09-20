@@ -16,6 +16,8 @@ const getPasswordStrength = (password) => {
   return { score: capped, label: labels[capped] };
 };
 
+const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
 const Signup = ({ onSuccess, onSwitchToLogin, inviteToken, initialError = "" }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,16 +26,29 @@ const Signup = ({ onSuccess, onSwitchToLogin, inviteToken, initialError = "" }) 
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState(initialError);
   const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState({});
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
+
+  const fieldErrors = useMemo(() => {
+    const errs = {};
+    if (touched.name && !name.trim()) errs.name = "Enter your full name.";
+    if (touched.email && email.trim() && !isValidEmail(email)) errs.email = "That doesn't look like a valid email.";
+    if (touched.password && password && password.length < 6) errs.password = "Use at least 6 characters.";
+    if (touched.orgName && !inviteToken && !orgName.trim()) errs.orgName = "Enter your organization name.";
+    return errs;
+  }, [touched, name, email, password, orgName, inviteToken]);
+
+  const markTouched = (field) => setTouched((t) => ({ ...t, [field]: true }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setTouched({ name: true, email: true, password: true, orgName: true });
 
     if (!name.trim()) return setError("Please enter your full name.");
-    if (!email.trim()) return setError("Please enter your email.");
-    if (!password.trim()) return setError("Please enter a password.");
+    if (!email.trim() || !isValidEmail(email)) return setError("Please enter a valid email address.");
+    if (!password.trim() || password.length < 6) return setError("Password must be at least 6 characters.");
     if (!inviteToken && !orgName.trim()) return setError("Please enter your organization name.");
     if (!agreedToTerms) return setError("Please accept the Terms of Service to continue.");
 
@@ -64,8 +79,18 @@ const Signup = ({ onSuccess, onSwitchToLogin, inviteToken, initialError = "" }) 
           <span>Agent<strong>CRM</strong></span>
         </div>
 
+        <div className="auth-progress">
+          <span className="auth-progress-step active">1</span>
+          <i />
+          <span className="auth-progress-step">2</span>
+          <i />
+          <span className="auth-progress-step">3</span>
+        </div>
+
         <h1 className="auth-title">Create your account</h1>
-        <p className="auth-subtitle">Start your free trial today</p>
+        <p className="auth-subtitle">
+          Step 1 of 3 — takes under a minute. You'll be replying to your first email in about 5.
+        </p>
 
         {error && <div className="auth-error">{error}</div>}
 
@@ -84,34 +109,40 @@ const Signup = ({ onSuccess, onSwitchToLogin, inviteToken, initialError = "" }) 
           <input
             id="signup-name"
             type="text"
-            className="auth-input"
+            className={`auth-input ${fieldErrors.name ? "invalid" : ""}`}
             placeholder="Jane Cooper"
             autoComplete="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onBlur={() => markTouched("name")}
           />
+          {fieldErrors.name && <span className="auth-field-error">{fieldErrors.name}</span>}
 
-          <label className="auth-label" htmlFor="signup-email">Email</label>
+          <label className="auth-label" htmlFor="signup-email">Work email</label>
           <input
             id="signup-email"
             type="email"
-            className="auth-input"
+            className={`auth-input ${fieldErrors.email ? "invalid" : ""}`}
             placeholder="you@company.com"
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => markTouched("email")}
           />
+          {fieldErrors.email && <span className="auth-field-error">{fieldErrors.email}</span>}
 
           <label className="auth-label" htmlFor="signup-password">Password</label>
           <input
             id="signup-password"
             type="password"
-            className="auth-input"
+            className={`auth-input ${fieldErrors.password ? "invalid" : ""}`}
             placeholder="••••••••"
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onBlur={() => markTouched("password")}
           />
+          {fieldErrors.password && <span className="auth-field-error">{fieldErrors.password}</span>}
           {password && (
             <div className="password-strength">
               <div className="password-strength-bar">
@@ -132,12 +163,14 @@ const Signup = ({ onSuccess, onSwitchToLogin, inviteToken, initialError = "" }) 
               <input
                 id="signup-org"
                 type="text"
-                className="auth-input"
+                className={`auth-input ${fieldErrors.orgName ? "invalid" : ""}`}
                 placeholder="Acme Inc."
                 autoComplete="organization"
                 value={orgName}
                 onChange={(e) => setOrgName(e.target.value)}
+                onBlur={() => markTouched("orgName")}
               />
+              {fieldErrors.orgName && <span className="auth-field-error">{fieldErrors.orgName}</span>}
             </>
           )}
 
@@ -151,7 +184,7 @@ const Signup = ({ onSuccess, onSwitchToLogin, inviteToken, initialError = "" }) 
           </label>
 
           <button type="submit" className="auth-submit" disabled={loading}>
-            {loading ? "Creating account..." : "Create account"}
+            {loading ? "Creating account..." : "Create free account"}
           </button>
         </form>
 
