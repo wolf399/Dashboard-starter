@@ -204,27 +204,34 @@ const TicketDetails = ({ ticket, onTicketUpdate, addToast }) => {
     finally  { setTranslating(null); }
   };
 
-  const handleSend = async () => {
-    if (!replyText.trim()) return;
-    try {
-      const senderType = replyMode === "note" ? "NOTE" : "AGENT";
-      const newMessage = await sendMessage(ticket.id, replyText, senderType);
-      setMessages((prev) => [...prev, newMessage]);
-      setExpandedMessages((prev) => ({ ...prev, [newMessage.id]: true }));
-      if (replyMode === "reply" && ticket.customer?.email) {
-        try {
-          await sendEmail({ to: ticket.customer.email, subject: ticket.subject, text: replyText, ticketId: ticket.id });
-          addToast("Reply sent and email delivered", "success");
-        } catch {
-          addToast("Reply saved but email failed", "info");
-        }
+ const handleSend = async () => {
+  if (!replyText.trim()) return;
+  try {
+    const senderType = replyMode === "note" ? "NOTE" : "AGENT";
+    const newMessage = await sendMessage(ticket.id, replyText, senderType);
+    setMessages((prev) => [...prev, newMessage]);
+    setExpandedMessages((prev) => ({ ...prev, [newMessage.id]: true }));
+
+    if (replyMode === "reply" && ticket.source === "WHATSAPP") {
+      if (newMessage.deliveryError) {
+        addToast("Reply saved but WhatsApp delivery failed", "info");
       } else {
-        addToast(replyMode === "note" ? "Note added" : "Message sent", "success");
+        addToast("Reply sent via WhatsApp", "success");
       }
-      setReplyText("");
-      setSuggestions([]);
-    } catch { addToast("Failed to send", "error"); }
-  };
+    } else if (replyMode === "reply" && ticket.customer?.email) {
+      try {
+        await sendEmail({ to: ticket.customer.email, subject: ticket.subject, text: replyText, ticketId: ticket.id });
+        addToast("Reply sent and email delivered", "success");
+      } catch {
+        addToast("Reply saved but email failed", "info");
+      }
+    } else {
+      addToast(replyMode === "note" ? "Note added" : "Message sent", "success");
+    }
+    setReplyText("");
+    setSuggestions([]);
+  } catch { addToast("Failed to send", "error"); }
+};
 
   const handleStatusChange = async (newStatus) => {
     setUpdatingStatus(true);

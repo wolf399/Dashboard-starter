@@ -23,6 +23,7 @@ import inviteRoutes from './modules/auth/invite.routes.js';
 import organizationRoutes from './modules/organization/organization.routes.js';
 import imapRoutes from './modules/imap/imap.routes.js';
 import gmailRoutes from './modules/gmail/gmail.routes.js';
+import whatsappRoutes from './modules/whatsapp/whatsapp.routes.js';
 import cannedResponseRoutes from './modules/cannedResponses/cannedResponses.routes.js';
 import contactRoutes from './modules/contact/contact.routes.js';
 import dealRoutes from './modules/deal/deal.routes.js';
@@ -67,6 +68,7 @@ export const build = async () => {
   await fastify.register(organizationRoutes, { prefix: '/api/organization' });
   await fastify.register(imapRoutes,         { prefix: '/api/imap' });
   await fastify.register(gmailRoutes,        { prefix: '/api/gmail' });
+  await fastify.register(whatsappRoutes,     { prefix: '/api/whatsapp' });
   await fastify.register(cannedResponseRoutes, { prefix: '/api' });
   await fastify.register(contactRoutes,        { prefix: '/api/contacts' });
   await fastify.register(dealRoutes,           { prefix: '/api/deals' });

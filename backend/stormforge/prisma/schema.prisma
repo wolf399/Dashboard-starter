@@ -23,6 +23,11 @@ model Organization {
   gmailTokenExpiry  DateTime?
   gmailEmail        String?
   gmailConnected    Boolean   @default(false)
+  whatsappApiKey        String?
+  whatsappPhoneNumber   String?
+  whatsappWabaId        String?
+  whatsappWebhookSecret String?
+  whatsappConnected     Boolean  @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 

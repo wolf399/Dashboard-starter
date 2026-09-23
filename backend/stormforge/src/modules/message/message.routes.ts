@@ -7,6 +7,7 @@ import {
 } from './message.schema.js';
 
 import { FastifyInstance } from 'fastify';
+import { sendWhatsAppMessage } from '../Whatsapp/whatsapp.routes.js';
 
 interface CreateMessageBody {
   body: string;
@@ -52,6 +53,31 @@ const messageRoutes = async (fastify: FastifyInstance) => {
           where: { id: ticketId },
           data: { updatedAt: new Date() },
         });
+
+        // Actually deliver agent replies out over the WhatsApp channel —
+        // saving to the database alone never reaches the customer.
+        // NOTE: EMAIL is deliberately NOT handled here — the frontend already
+        // calls /api/email/send separately for email replies (TicketDetails.jsx),
+        // so adding it here would double-send. Only wiring the new channel.
+        if (senderType !== 'CUSTOMER' && ticket.source === 'WHATSAPP') {
+          const [org, customer] = await Promise.all([
+            fastify.prisma.organization.findUnique({ where: { id: ticket.organizationId } }),
+            fastify.prisma.customer.findUnique({ where: { id: ticket.customerId } }),
+          ]);
+
+          if (org?.whatsappConnected && org.whatsappApiKey && org.whatsappPhoneNumber && customer?.phone) {
+            try {
+              await sendWhatsAppMessage(org.whatsappApiKey, org.whatsappPhoneNumber, customer.phone, body);
+            } catch (err: any) {
+              fastify.log.error(`WhatsApp send failed for message ${message.id}: ${err.message}`);
+              // Message is already stored — surface the delivery failure without
+              // losing the saved message.
+              return reply.status(201).send({ ...message, deliveryError: err.message });
+            }
+          } else {
+            fastify.log.error(`WhatsApp send skipped for message ${message.id}: org not connected or customer has no phone`);
+          }
+        }
 
         return reply.status(201).send(message);
       } catch (error: any) {

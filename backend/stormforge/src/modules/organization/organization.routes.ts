@@ -12,7 +12,7 @@ export default async function organizationRoutes(fastify: FastifyInstance) {
     if (!org.inboundEmail) {
       org = await fastify.prisma.organization.update({
         where: { id: org.id },
-        data: { inboundEmail: `552e0efa87304ddc1f27+${org.slug}@cloudmailin.net` },
+        data: { inboundEmail: `${process.env.CLOUDMAILIN_TOKEN}+${org.slug}@cloudmailin.net` },
       });
     }
 
