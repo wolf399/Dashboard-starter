@@ -15,11 +15,5 @@
       "src": "/(.*)",
       "dest": "api/index.ts"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/gmail/cron-sync",
-      "schedule": "*/5 * * * *"
-    }
   ]
 }

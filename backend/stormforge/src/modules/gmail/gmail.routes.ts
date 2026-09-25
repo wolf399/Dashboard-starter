@@ -33,7 +33,7 @@ const getTokens = async (code: string) => {
   return res.json();
 };
 
-const refreshAccessToken = async (refreshToken: string) => {
+const refreshAccessToken = async (refreshToken: string): Promise<any> => {
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
