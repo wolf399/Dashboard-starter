@@ -74,9 +74,17 @@ function App() {
     setContactDetailId(null);
   };
 
+  // Fetch tickets on login, then keep polling so new emails/WhatsApp
+  // messages (which create new tickets) show up without a manual reload.
   useEffect(() => {
     if (!isLoggedIn) return;
-    getTickets().then(setTickets).catch(console.error);
+
+    const fetchTickets = () => getTickets().then(setTickets).catch(console.error);
+
+    fetchTickets();
+    const interval = setInterval(fetchTickets, 15000); // poll every 15s
+
+    return () => clearInterval(interval);
   }, [isLoggedIn]);
 
   const handleTicketUpdate = (updatedTicket) => {

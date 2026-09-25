@@ -7,7 +7,7 @@ import {
 } from './message.schema.js';
 
 import { FastifyInstance } from 'fastify';
-import { sendWhatsAppMessage } from '../Whatsapp/whatsapp.routes.js';
+import { sendWhatsAppMessage } from '../whatsapp/whatsapp.routes.js';
 
 interface CreateMessageBody {
   body: string;

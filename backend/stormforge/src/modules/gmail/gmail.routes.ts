@@ -1,5 +1,4 @@
 import { FastifyInstance } from 'fastify';
-import cron from 'node-cron';
 
 const REDIRECT_URI = 'https://agent-crm-backend.vercel.app/api/gmail/callback';
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
@@ -187,6 +186,7 @@ export default async function gmailRoutes(fastify: FastifyInstance) {
     return { success: true };
   });
 
+  // ── Manual sync — triggered from the frontend (e.g. a "Sync now" button) ──
   fastify.post('/sync', async (request: any, reply: any) => {
     const user = await request.jwtVerify() as any;
     const org = await fastify.prisma.organization.findUnique({ where: { id: user.organizationId } });
@@ -194,6 +194,33 @@ export default async function gmailRoutes(fastify: FastifyInstance) {
       return reply.status(400).send({ error: 'Gmail not connected' });
     await checkGmailForOrg(org, fastify);
     return { success: true };
+  });
+
+  // ── Scheduled sync — called by Vercel Cron (see vercel.json), not node-cron.
+  // node-cron doesn't survive Vercel's serverless model (no persistent process
+  // for setInterval-style timers to live in), so this is a real HTTP-triggered
+  // cron hitting all connected orgs on a schedule instead. ──
+  fastify.get('/cron-sync', async (request: any, reply: any) => {
+    const authHeader = request.headers['authorization'];
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+
+    const orgs = await fastify.prisma.organization.findMany({
+      where: { gmailConnected: true, gmailAccessToken: { not: null } },
+    });
+
+    let synced = 0;
+    for (const org of orgs) {
+      try {
+        await checkGmailForOrg(org, fastify);
+        synced++;
+      } catch (err: any) {
+        fastify.log.error(`[Gmail Cron] Sync failed for ${org.gmailEmail}: ${err.message}`);
+      }
+    }
+
+    return { synced, total: orgs.length };
   });
 }
 
@@ -243,15 +270,18 @@ export async function checkGmailForOrg(org: any, fastify: any) {
       }
     };
 
-    const afterDate = org.gmailTokenExpiry
-      ? Math.floor(new Date(org.gmailTokenExpiry).getTime() / 1000) - (90 * 24 * 60 * 60)
+    // Use a real sync cursor instead of relying on Gmail's UNREAD label —
+    // an email read directly in Gmail before we sync used to be skipped
+    // forever. First sync ever for an org just looks back 24h.
+    const afterDate = org.gmailLastSyncAt
+      ? Math.floor(new Date(org.gmailLastSyncAt).getTime() / 1000)
       : Math.floor(Date.now() / 1000) - (24 * 60 * 60);
 
     const listData = await gmailFetchWithRefresh(
-      `/messages?maxResults=10&q=is:unread+in:inbox+after:${afterDate}`
+      `/messages?maxResults=20&q=in:inbox+after:${afterDate}`
     );
     const messages = (listData as any).messages || [];
-    console.log(`Gmail: ${messages.length} unread for ${org.gmailEmail}`);
+    console.log(`Gmail: ${messages.length} new messages for ${org.gmailEmail}`);
 
     for (const msg of messages) {
       const full = await gmailFetchWithRefresh(
@@ -268,18 +298,10 @@ export async function checkGmailForOrg(org: any, fastify: any) {
       const fromEmail  = (emailMatch[1] || from).trim();
       const fromName   = from.replace(/<.+>/, '').trim() || fromEmail;
 
+      // Skip our own sent messages (they show up in the same thread)
       if (!fromEmail || fromEmail.toLowerCase() === org.gmailEmail?.toLowerCase()) {
-        await gmailFetchWithRefresh(`/messages/${msg.id}/modify`, {
-          method: 'POST',
-          body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
-        });
         continue;
       }
-
-      await gmailFetchWithRefresh(`/messages/${msg.id}/modify`, {
-        method: 'POST',
-        body: JSON.stringify({ removeLabelIds: ['UNREAD'] }),
-      });
 
       const emailBody = extractEmailBodyWithCid((full as any).payload);
       const bodyText  = emailBody.trim() || `[No content — email from ${fromName} <${fromEmail}>]`;
@@ -289,6 +311,13 @@ export async function checkGmailForOrg(org: any, fastify: any) {
       });
 
       if (existingTicket) {
+        // Avoid inserting the same reply twice if a message falls on the
+        // after:<timestamp> boundary between two sync runs.
+        const alreadyStored = await fastify.prisma.message.findFirst({
+          where: { ticketId: existingTicket.id, body: bodyText, senderType: 'CUSTOMER' },
+        });
+        if (alreadyStored) continue;
+
         await fastify.prisma.message.create({
           data: {
             body: bodyText,
@@ -338,47 +367,14 @@ export async function checkGmailForOrg(org: any, fastify: any) {
 
       console.log(`New ticket created: ${subject}`);
     }
+
+    // Move the sync cursor forward only after a successful pass.
+    await fastify.prisma.organization.update({
+      where: { id: org.id },
+      data: { gmailLastSyncAt: new Date() },
+    });
   } catch (err: any) {
     console.error(`Gmail sync error:`, err.message);
     throw err;
-  }
-}
-
-export async function startGmailPoller(fastify: any) {
-  try {
-    // Run Gmail sync every 5 minutes (*/5 * * * *)
-    cron.schedule('*/5 * * * *', async () => {
-      try {
-        console.log('[Gmail Poller] Starting email sync...');
-
-        // Get all organizations with Gmail connected
-        const orgs = await fastify.prisma.organization.findMany({
-          where: {
-            gmailConnected: true,
-            gmailAccessToken: { not: null },
-          },
-        });
-
-        console.log(`[Gmail Poller] Found ${orgs.length} organizations to sync`);
-
-        // Sync Gmail for each organization
-        for (const org of orgs) {
-          try {
-            await checkGmailForOrg(org, fastify);
-          } catch (err: any) {
-            console.error(`[Gmail Poller] Error syncing ${org.gmailEmail}:`, err.message);
-            // Continue with next org instead of crashing
-          }
-        }
-
-        console.log('[Gmail Poller] Email sync completed');
-      } catch (err: any) {
-        console.error('[Gmail Poller] Unexpected error:', err.message);
-      }
-    });
-
-    console.log('[Gmail Poller] Background job started (runs every 5 minutes)');
-  } catch (err: any) {
-    console.error('[Gmail Poller] Failed to start:', err.message);
   }
 }
