@@ -1,9 +1,45 @@
 import { FastifyInstance } from 'fastify';
+import Groq from 'groq-sdk';
 
 const REDIRECT_URI = 'https://agent-crm-backend.vercel.app/api/gmail/callback';
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://agentcrm.company';
+
+const groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+// Autonomous ticket-status transition: reads the customer's latest reply and
+// decides, without a human in the loop, whether the issue is resolved. This
+// is intentionally the first "execution layer" action we ship — a wrong
+// resolve is cheap to undo (an agent just reopens the ticket), unlike a wrong
+// auto-reply or auto-route, so it's a safe place to start mutating state
+// directly instead of only drafting suggestions.
+const checkIfResolved = async (latestMessage: string): Promise<boolean> => {
+  try {
+    const response = await groqClient.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 5,
+      messages: [{
+        role: 'user',
+        content: `You are triaging a customer support reply. Respond with ONLY "YES" or "NO" — nothing else.
+
+Does this message clearly indicate the customer's issue is now resolved and no further action is needed (e.g. they say thanks, confirm it's fixed, or say the problem is gone)? If it's ambiguous, asks a new question, or raises any further concern, answer NO.
+
+Customer message:
+"""
+${latestMessage}
+"""`,
+      }],
+    });
+    const text = (response.choices[0]?.message?.content || '').trim().toUpperCase();
+    return text.startsWith('YES');
+  } catch (err: any) {
+    // Fail safe: never block message ingestion on the AI call, and never
+    // auto-resolve on an error — leave the ticket status untouched.
+    console.error('Resolution check failed:', err.message);
+    return false;
+  }
+};
 
 const getAuthUrl = (state: string) => {
   const params = new URLSearchParams({
@@ -326,6 +362,18 @@ export async function checkGmailForOrg(org: any, fastify: any) {
           },
         });
         console.log(`Reply added to ticket: ${existingTicket.id}`);
+
+        if (existingTicket.status !== 'RESOLVED') {
+          const resolved = await checkIfResolved(bodyText);
+          if (resolved) {
+            await fastify.prisma.ticket.update({
+              where: { id: existingTicket.id },
+              data: { status: 'RESOLVED' },
+            });
+            console.log(`Ticket auto-resolved based on customer signal: ${existingTicket.id}`);
+          }
+        }
+
         continue;
       }
 
