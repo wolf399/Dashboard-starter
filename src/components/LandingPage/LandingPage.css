@@ -160,6 +160,19 @@
   mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, black, transparent);
 }
 
+.hero-badge {
+  display: inline-block;
+  background: #f0fdf4;
+  color: #16a34a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid #bbf7d0;
+  margin-bottom: 1.25rem;
+  animation: fadeUp 0.6s ease 0s both;
+}
+
 .hero-title {
   font-family: 'Instrument Sans', sans-serif;
   font-size: clamp(2.5rem, 5.5vw, 4rem);
@@ -192,6 +205,13 @@
   flex-wrap: wrap;
   margin-bottom: 1.5rem;
   animation: fadeUp 0.6s ease 0.3s both;
+}
+
+.hero-note {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-bottom: 2.5rem;
+  animation: fadeUp 0.6s ease 0.35s both;
 }
 
 .hero-cta-primary {
@@ -267,8 +287,16 @@
   width: 100%;
   max-width: 1040px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   animation: fadeUp 0.8s ease 0.5s both;
+}
+
+.example-data-caption {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin-top: 0.75rem;
+  text-align: center;
 }
 
 .product-window {
@@ -877,17 +905,19 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 1rem 3rem;
+  padding: 1rem 2rem;
   border-right: 1px solid #1e293b;
+  text-align: center;
 }
 
 .stat-item:last-child { border-right: none; }
 
 .stat-item strong {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: #fff;
   font-family: 'Instrument Sans', sans-serif;
+  white-space: nowrap;
 }
 
 .stat-item span {
@@ -1021,8 +1051,8 @@
   line-height: 1.7;
 }
 
-/* ── TESTIMONIALS ── */
-.testimonials {
+/* ── FOUNDER NOTE ── */
+.founder-section {
   padding: 6rem 2rem;
   background: #f9fafb;
   text-align: center;
@@ -1031,72 +1061,37 @@
   align-items: center;
 }
 
-.testimonials-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.25rem;
-  max-width: 1000px;
-  width: 100%;
+.founder-card {
+  max-width: 680px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 2.25rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   text-align: left;
 }
 
-.testimonial-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 1.75rem;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.testimonial-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-}
-
-.testimonial-stars {
-  color: #f59e0b;
-  font-size: 0.875rem;
-  margin-bottom: 0.875rem;
-  letter-spacing: 2px;
-}
-
-.testimonial-quote {
-  font-size: 0.9rem;
+.founder-card p {
+  font-size: 1rem;
   color: #374151;
-  line-height: 1.7;
-  margin-bottom: 1.25rem;
-  font-style: italic;
+  line-height: 1.8;
+  margin: 0;
 }
 
-.testimonial-author {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.testimonial-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 0.75rem;
+/* ── COMING SOON ── */
+.coming-soon-badge {
+  display: inline-block;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 0.65rem;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.testimonial-name {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.testimonial-role {
-  font-size: 0.75rem;
-  color: #9ca3af;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 8px;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 /* ── PRICING ── */
@@ -1236,6 +1231,7 @@
   font-size: 0.85rem;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   font-weight: 500;
 }
@@ -1563,4 +1559,40 @@
   color: #16a34a;
   font-weight: 600;
   text-align: center;
+}
+
+/* ── IMPRESSUM ── */
+.impressum-page {
+  min-height: 100vh;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+
+.impressum-inner {
+  max-width: 640px;
+  width: 100%;
+}
+
+.impressum-back {
+  display: inline-block;
+  margin-bottom: 2rem;
+  color: #16a34a;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.impressum-inner h1 {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 2rem;
+  color: #0f172a;
+  margin-bottom: 1rem;
+}
+
+.impressum-placeholder {
+  color: #6b7280;
+  line-height: 1.7;
+  font-size: 0.95rem;
 }

@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import Sidebar from './components/Sidebar/Sidebar';
 import MainDash from './components/MainDash/MainDash';
 import LandingPage from './components/LandingPage/LandingPage';
+import Impressum from './components/LandingPage/Impressum';
 import Onboarding from './components/Onboarding/Onboarding';
 import Toast from './components/Toast/Toast';
 import useToast from './hooks/useToast';
@@ -114,6 +115,10 @@ function App() {
     }
     setActiveView(view);
   };
+
+  if (window.location.pathname === "/impressum") {
+    return <Impressum />;
+  }
 
   if (!isLoggedIn) {
     return (

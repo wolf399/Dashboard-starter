@@ -38,6 +38,13 @@ const FeatureIcon = ({ type, accent, bg }) => {
     sparkle: (
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     ),
+    pipeline: (
+      <>
+        <rect x="3" y="4" width="5" height="16" rx="1" />
+        <rect x="10" y="4" width="5" height="10" rx="1" />
+        <rect x="17" y="4" width="5" height="13" rx="1" />
+      </>
+    ),
   };
   return (
     <div className="feature-icon" style={{ background: bg }}>
@@ -179,18 +186,12 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
   }
 
   const features = [
-    { icon: "inbox", title: "Smart Inbox", desc: "All your customer conversations in one beautifully organized inbox. Filter by status, search instantly, never miss a message.", color: "#f0fdf4", accent: "#16a34a" },
-    { icon: "bolt", title: "Lightning Fast", desc: "Respond to customers in seconds with AI-powered reply suggestions. Canned responses and keyboard shortcuts built in.", color: "#eff6ff", accent: "#3b82f6" },
-    { icon: "chart", title: "Analytics", desc: "Real-time dashboards showing ticket volume, resolution rates, team performance, and customer satisfaction scores.", color: "#fdf4ff", accent: "#a855f7" },
-    { icon: "task", title: "Task Management", desc: "Create follow-up tasks, assign to teammates, set due dates. Never let a customer fall through the cracks.", color: "#fff7ed", accent: "#f97316" },
-    { icon: "users", title: "Customer Profiles", desc: "Rich customer profiles with full ticket history, contact details, and activity timeline all in one place.", color: "#fef2f2", accent: "#ef4444" },
-    { icon: "sparkle", title: "AI Powered", desc: "Let AI summarize long threads and suggest the perfect reply. Save hours every week on repetitive support tasks.", color: "#f0fdfa", accent: "#14b8a6" },
-  ];
-
-  const testimonials = [
-    { quote: "AgentCRM cut our response time by 60%. Our customers can't believe how fast we reply now.", name: "Sarah Chen", role: "Head of Support, Flowmint", avatar: "SC", color: "#16a34a" },
-    { quote: "Finally a CRM that doesn't feel like it was built in 2005. The UI is gorgeous and actually intuitive.", name: "Marcus Webb", role: "Founder, Stacklabs", avatar: "MW", color: "#3b82f6" },
-    { quote: "The analytics alone are worth it. I finally know exactly where our support team is struggling.", name: "Priya Nair", role: "Customer Success, Orbio", avatar: "PN", color: "#a855f7" },
+    { icon: "inbox", title: "Smart Inbox", desc: "All your customer conversations — email and WhatsApp — in one organized inbox. Filter by status, search instantly, never miss a message.", color: "#f0fdf4", accent: "#16a34a" },
+    { icon: "bolt", title: "Faster replies", desc: "Reply in seconds with AI-drafted suggestions, canned responses, and keyboard shortcuts built in.", color: "#f0fdf4", accent: "#16a34a" },
+    { icon: "users", title: "Customer Profiles", desc: "Rich customer profiles with full ticket history, contact details, and activity timeline all in one place.", color: "#f0fdf4", accent: "#16a34a" },
+    { icon: "pipeline", title: "Sales Pipeline", desc: "Track deals through your pipeline, linked to the same contacts your support team already talks to.", color: "#f0fdf4", accent: "#16a34a" },
+    { icon: "task", title: "Task Management", desc: "Create follow-up tasks, assign to teammates, set due dates. Never let a customer fall through the cracks.", color: "#f0fdf4", accent: "#16a34a", comingSoon: true },
+    { icon: "chart", title: "Analytics", desc: "Dashboards showing ticket volume, resolution rates, and team performance.", color: "#f0fdf4", accent: "#16a34a", comingSoon: true },
   ];
 
   const plans = [
@@ -203,13 +204,13 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
     {
       name: "Growth", price: "$29", period: "/mo", desc: "For growing teams that need more power.",
       planClass: "growth", badge: "Most Popular",
-      features: ["Up to 10 agents", "Unlimited tickets", "AI reply suggestions", "Pipeline & deals", "Contact management", "Task management", "Advanced analytics", "Priority support"],
+      features: ["Up to 10 agents", "Unlimited tickets", "AI reply suggestions", "Pipeline & deals", "Contact management", { text: "Task management", comingSoon: true }, { text: "Advanced analytics", comingSoon: true }, "Priority support"],
       cta: "Start Free Trial", ctaStyle: "solid",
     },
     {
       name: "Business", price: "$79", period: "/mo", desc: "Enterprise-grade for large support teams.",
       planClass: "business", badge: null,
-      features: ["Unlimited agents", "Unlimited tickets", "AI summary & suggestions", "Pipeline & deals", "Contact management", "Custom analytics", "Canned responses", "Priority support", "Dedicated onboarding"],
+      features: ["Unlimited agents", "Unlimited tickets", "AI summary & suggestions", "Pipeline & deals", "Contact management", { text: "Custom analytics", comingSoon: true }, "Canned responses", "Priority support", { text: "Dedicated onboarding", comingSoon: true }],
       cta: "Start Free Trial", ctaStyle: "dark",
     },
   ];
@@ -238,7 +239,7 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
             </span>
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
-            <a href="#testimonials">Reviews</a>
+            <a href="#about">About</a>
             <a href="#contact">Contact us</a>
           </div>
           <div className="nav-actions">
@@ -250,42 +251,21 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
 
       {/* Hero */}
       <section className="hero">
+        <div className="hero-badge">Early access · Free to try</div>
         <h1 className="hero-title">
-          All-in-One CRM<br />
-          for <span className="hero-highlight">Support Teams</span>
+          Customer support and sales<br />
+          in <span className="hero-highlight">one inbox</span>
         </h1>
         <p className="hero-sub">
-          Manage customer conversations, sales pipelines, and support tickets in one powerful CRM platform built for modern teams.
+          Bring your Gmail and WhatsApp conversations, tickets, contacts and sales pipeline into one place. Built for teams that talk to customers every day.
         </p>
         <div className="hero-ctas">
           <button className="hero-cta-primary" onClick={() => setMode("register")}>Start your free trial</button>
-          <button className="hero-cta-secondary" onClick={() => setMode("login")}>See product demo</button>
+          <button className="hero-cta-secondary" onClick={() => setMode("login")}>See how it works</button>
         </div>
-        <div className="hero-tagline">
-          <span>SMART INBOX</span>
-          <i />
-          <span>AI-POWERED REPLIES</span>
-          <i />
-          <span>24/7 CUSTOMER SUPPORT</span>
-        </div>
+        <p className="hero-note">Gmail + WhatsApp · Database hosted in the EU · No credit card required</p>
 
         <div className="hero-laptop-wrap">
-          <div className="floating-card rating-card">
-            <div className="floating-stars">★★★★★</div>
-            <div className="floating-card-text">
-              <strong>Over 2,000+</strong>
-              <span>teams already using AgentCRM</span>
-            </div>
-          </div>
-
-          <div className="floating-card score-card">
-            <div className="score-value">98%</div>
-            <div className="floating-card-text">
-              <strong>Customer Satisfaction</strong>
-              <span>Based on last quarter</span>
-            </div>
-          </div>
-
           <div className="product-window">
             <div className="pw-titlebar">
               <div className="window-dots"><span /><span /><span /></div>
@@ -311,11 +291,11 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
 
               {/* ticket list */}
               <div className="pw-list">
-                <div className="pw-list-header">MY TICKETS · 12</div>
+                <div className="pw-list-header">MY TICKETS</div>
                 <div className="pw-list-item active">
                   <span className="pw-chip email">EMAIL</span>
                   <div className="pw-list-name">Jenny Wilson</div>
-                  <div className="pw-list-snippet">Order #4192 hasn't arrived, any update?</div>
+                  <div className="pw-list-snippet">My order hasn't arrived, any update?</div>
                 </div>
                 <div className="pw-list-item">
                   <span className="pw-chip chat">CHAT</span>
@@ -325,7 +305,7 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
                 <div className="pw-list-item">
                   <span className="pw-chip whatsapp">WHATSAPP</span>
                   <div className="pw-list-name">Rachel Green</div>
-                  <div className="pw-list-snippet">Refund status on order #12345</div>
+                  <div className="pw-list-snippet">Any update on my refund?</div>
                 </div>
                 <div className="pw-list-item">
                   <span className="pw-chip email">EMAIL</span>
@@ -340,13 +320,12 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
                   <div className="pw-thread-avatar">J</div>
                   <div className="pw-thread-title">
                     <strong>Jenny Wilson</strong>
-                    <span>#4,192 · EN-US</span>
+                    <span>EN-US</span>
                   </div>
                 </div>
                 <div className="pw-tags">
                   <span className="pw-tag">INTENT · order_status</span>
                   <span className="pw-tag negative">SENTIMENT · negative</span>
-                  <span className="pw-tag">TIER · pro</span>
                 </div>
 
                 <div className="pw-msg customer">
@@ -354,22 +333,9 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
                   Hey, my order was supposed to arrive 3 days ago. Any update?
                 </div>
 
-                <div className="pw-ai-card">
-                  <div className="pw-ai-card-label"><span className="ai-dot">AI</span> AI agent · acted</div>
-                  <p>Looked up order #4192 → delayed at regional hub. Reissued delivery and applied a $10 goodwill credit.</p>
-                  <div className="pw-ai-checklist">✓ Order updated · delivery reissued · credit applied</div>
-                </div>
-
-                <div className="pw-msg customer">
-                  <span className="pw-msg-meta">Customer · 09:16</span>
-                  This is the second time this has happened...
-                </div>
-
-                <div className="pw-escalate">⇄ Escalated — repeat complaint. Matched to Sarah K. (support · 28% load)</div>
-
                 <div className="pw-msg agent">
                   <span className="pw-msg-meta">Sarah K. · agent</span>
-                  I'm really sorry about this, Jenny — that's not the experience we want you to have...
+                  I'm really sorry about this, Jenny — let me check on that for you now.
                 </div>
               </div>
 
@@ -379,28 +345,16 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
 
                 <div className="pw-copilot-card">
                   <div className="pw-copilot-label">Suggested reply</div>
-                  <p>Your order was delayed at our regional hub. I've reissued delivery for tomorrow and added a $10 credit to your account for the inconvenience.</p>
+                  <p>Hi Jenny, sorry about the delay. I'm checking your order now and will update you shortly.</p>
                   <div className="pw-copilot-actions">
                     <button className="pw-btn primary">Insert</button>
                     <button className="pw-btn">Rewrite</button>
                   </div>
                 </div>
-
-                <div className="pw-copilot-card">
-                  <div className="pw-copilot-label">Knowledge source</div>
-                  <p className="pw-source-title">Delivery Delay &amp; Goodwill Policy · v3.1</p>
-                  <p className="pw-source-sub">Same article served the AI agent above.</p>
-                </div>
-
-                <div className="pw-copilot-card">
-                  <div className="pw-copilot-label">Applied automatically</div>
-                  <div className="pw-kv"><span>Label</span><strong className="chip">delivery-delay</strong></div>
-                  <div className="pw-kv"><span>Status</span><strong>Escalated</strong></div>
-                  <div className="pw-kv"><span>Follow-up</span><strong>24h</strong></div>
-                </div>
               </div>
             </div>
           </div>
+          <p className="example-data-caption">Example data</p>
         </div>
       </section>
 
@@ -458,34 +412,20 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
           <div className="cta-card-row">
             <div className="cta-card-icon"><IntegrationIcon type="chat" color="#16a34a" /></div>
             <div className="cta-card-text">
-              <strong>Renewal call — Flowmint</strong>
+              <strong>Renewal call — Acme Co.</strong>
               <span>Scheduled tomorrow, 15:30</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Trusted */}
-      <section className="trust-section">
-        <h2 className="section-title">Trusted CRM Software by Growing Support Teams</h2>
-        <p className="section-sub" style={{ margin: "0 auto 3rem" }}>
-          AgentCRM helps support teams manage customer relationships, streamline workflows, and deliver consistent customer experiences across every channel.
-        </p>
-        <p className="trusted-label">Trusted by teams at</p>
-        <div className="trusted-logos">
-          {["Flowmint", "Stacklabs", "Orbio", "Meridian", "Crestline", "Aether"].map((name, i) => (
-            <span key={i} className="trusted-logo">{name}</span>
-          ))}
-        </div>
-      </section>
-
       {/* Stats bar */}
       <div className="stats-bar">
         {[
-          { value: "60%", label: "Faster response time" },
-          { value: "2,000+", label: "Teams worldwide" },
-          { value: "4.9★", label: "Average rating" },
-          { value: "99.9%", label: "Uptime SLA" },
+          { value: "2 channels", label: "Gmail and WhatsApp in one inbox" },
+          { value: "EU", label: "Database hosted in Frankfurt" },
+          { value: "Free", label: "Early-access teams try it at no cost" },
+          { value: "Founder", label: "A direct line to the person who built it" },
         ].map((s, i) => (
           <div key={i} className="stat-item">
             <strong>{s.value}</strong>
@@ -497,37 +437,30 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
       {/* Features */}
       <section className="features" id="features">
         <div className="section-label">Features</div>
-        <h2 className="section-title">Everything your support team needs</h2>
-        <p className="section-sub">From inbox to analytics — AgentCRM has every tool to make your customers happy and your team efficient.</p>
+        <h2 className="section-title">Everything your team needs to support and sell</h2>
+        <p className="section-sub">From inbox to pipeline — AgentCRM covers support and sales in one place.</p>
         <div className="features-grid">
           {features.map((f, i) => (
             <div key={i} className="feature-card" style={{ background: f.color, borderColor: f.accent + "33" }}>
               <FeatureIcon type={f.icon} accent={f.accent} bg={f.accent + "22"} />
-              <h3 style={{ color: f.accent }}>{f.title}</h3>
+              <h3 style={{ color: f.accent }}>
+                {f.title}
+                {f.comingSoon && <span className="coming-soon-badge">Coming soon</span>}
+              </h3>
               <p>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="testimonials" id="testimonials">
-        <div className="section-label">Testimonials</div>
-        <h2 className="section-title">Loved by support teams</h2>
-        <div className="testimonials-grid">
-          {testimonials.map((t, i) => (
-            <div key={i} className="testimonial-card">
-              <div className="testimonial-stars">★★★★★</div>
-              <p className="testimonial-quote">"{t.quote}"</p>
-              <div className="testimonial-author">
-                <div className="testimonial-avatar" style={{ background: t.color }}>{t.avatar}</div>
-                <div>
-                  <div className="testimonial-name">{t.name}</div>
-                  <div className="testimonial-role">{t.role}</div>
-                </div>
-              </div>
-            </div>
-          ))}
+      {/* Founder note */}
+      <section className="founder-section" id="about">
+        <div className="section-label">About</div>
+        <h2 className="section-title">Built by someone who's lived the problem</h2>
+        <div className="founder-card">
+          <p>
+            I'm the founder of AgentCRM. After years in customer service and customer success, I kept seeing the same problem: customer messages scattered across inboxes and chats, follow-ups forgotten, and nobody sure who replied to what. I built AgentCRM to put support and sales in one place. We're opening to our first teams now. If you try it, you'll talk directly to me, so tell me what's missing and I'll build it.
+          </p>
         </div>
       </section>
 
@@ -535,7 +468,7 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
       <section className="pricing" id="pricing">
         <div className="section-label">Pricing</div>
         <h2 className="section-title">Simple, honest pricing</h2>
-        <p className="section-sub">Start free, upgrade when you're ready. No hidden fees, no surprises.</p>
+        <p className="section-sub">Free during early access. We'll give you 30 days' notice before billing starts.</p>
         <div className="pricing-grid">
           {plans.map((plan, i) => (
             <div key={i} className={`pricing-card ${plan.planClass}`}>
@@ -546,12 +479,17 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
               </div>
               <p className="pricing-desc">{plan.desc}</p>
               <ul className="pricing-features">
-                {plan.features.map((f, j) => (
-                  <li key={j}>
-                    <CheckIcon color={plan.planClass === "business" ? "#6366f1" : "#16a34a"} />
-                    {f}
-                  </li>
-                ))}
+                {plan.features.map((f, j) => {
+                  const text = typeof f === "string" ? f : f.text;
+                  const comingSoon = typeof f === "object" && f.comingSoon;
+                  return (
+                    <li key={j}>
+                      <CheckIcon color={plan.planClass === "business" ? "#6366f1" : "#16a34a"} />
+                      {text}
+                      {comingSoon && <span className="coming-soon-badge">Coming soon</span>}
+                    </li>
+                  );
+                })}
               </ul>
               <button className={`pricing-cta ${plan.ctaStyle}`} onClick={() => setMode("register")}>{plan.cta}</button>
             </div>
@@ -561,8 +499,8 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
 
       {/* Final CTA */}
       <section className="final-cta">
-        <h2>Ready to delight your customers?</h2>
-        <p>Join 2,000+ teams using AgentCRM to deliver world-class support.</p>
+        <h2>Ready to try it?</h2>
+        <p>We're opening to our first teams. Try it free and tell us what to build next.</p>
         <button className="hero-cta-primary" onClick={() => setMode("register")}>Get started for free →</button>
       </section>
 
@@ -581,25 +519,23 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
               <h4>Product</h4>
               <a href="#features">Features</a>
               <a href="#pricing">Pricing</a>
-              <a href="#testimonials">Reviews</a>
             </div>
             <div className="footer-col">
               <h4>Company</h4>
-              <a href="#">About</a>
-              <a href="#">Blog</a>
-              <a href="#">Careers</a>
+              <a href="#about">About</a>
+              <a href="#contact">Contact</a>
             </div>
             <div className="footer-col">
-              <h4>Support</h4>
-              <a href="#">Docs</a>
-              <a href="#">Status</a>
-              <a href="#">Contact</a>
+              <h4>Legal</h4>
+              <a href="#">Privacy</a>
+              <a href="#">Terms</a>
+              <a href="/impressum">Impressum</a>
             </div>
           </div>
         </div>
         <div className="footer-bottom">
           <span>© 2026 AgentCRM. All rights reserved.</span>
-          <span>Privacy · Terms</span>
+          <span>Privacy · Terms · <a href="/impressum">Impressum</a></span>
         </div>
       </footer>
     </div>
