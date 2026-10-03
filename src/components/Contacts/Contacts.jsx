@@ -23,6 +23,13 @@ const SOURCE_CFG = {
   Other:          { bg: "#f3f4f6", color: "#6b7280" },
 };
 
+// Lead score thresholds — tune these as you see real score distributions.
+const scoreCfg = (score) => {
+  if (score >= 70) return { bg: "#dcfce7", color: "#16a34a" };
+  if (score >= 30) return { bg: "#fef3c7", color: "#b45309" };
+  return { bg: "#fee2e2", color: "#dc2626" };
+};
+
 const fmt = (d) => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
 
 const STATUSES = ["ALL", "LEAD", "QUALIFIED", "CONVERTED", "LOST"];
@@ -221,6 +228,7 @@ const Contacts = ({ addToast, onOpenContact }) => {
               contacts.map((c) => {
                 const sc = STATUS_CFG[c.status] || STATUS_CFG.LEAD;
                 const src = c.source ? SOURCE_CFG[c.source] : null;
+                const showScore = c.status !== "CONVERTED" && c.leadScore != null;
                 return (
                   <div
                     key={c.id}
@@ -237,6 +245,11 @@ const Contacts = ({ addToast, onOpenContact }) => {
                       </div>
                     </div>
                     <div className="cr-meta">
+                      {showScore && (
+                        <span className="cr-score-pill" style={scoreCfg(c.leadScore)} title="Lead score">
+                          {c.leadScore}
+                        </span>
+                      )}
                       {src && <span className="cr-badge" style={src}>{c.source}</span>}
                       <span className="cr-badge" style={sc}>{c.status}</span>
                       <span className="cr-date">{fmt(c.createdAt)}</span>

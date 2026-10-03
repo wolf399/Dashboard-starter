@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-
+import { bumpContactActivity } from '../../utils/leadScore.js';
 interface ContactParams { id: string; }
 
 interface CreateContactBody {
@@ -260,6 +260,7 @@ const contactRoutes = async (fastify: FastifyInstance) => {
           },
           include: { agent: { select: { id: true, name: true } } },
         });
+        await bumpContactActivity(fastify, id);
         return reply.status(201).send(call);
       } catch (error: any) {
         fastify.log.error(error);
@@ -300,6 +301,7 @@ const contactRoutes = async (fastify: FastifyInstance) => {
           data: { content, contactId: id, organizationId: user.organizationId, agentId: user.id },
           include: { agent: { select: { id: true, name: true } } },
         });
+        await bumpContactActivity(fastify, id);
         return reply.status(201).send(note);
       } catch (error: any) {
         fastify.log.error(error);

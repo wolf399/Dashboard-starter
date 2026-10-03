@@ -6,7 +6,7 @@ import {
 } from "../../api";
 import {
   UilPlus, UilTimes, UilEdit, UilTrashAlt, UilDollarSign,
-  UilCalendarAlt, UilUserCircle,
+  UilCalendarAlt, UilUserCircle, UilClock,
 } from "@iconscout/react-unicons";
 
 const STAGES = [
@@ -18,8 +18,17 @@ const STAGES = [
   { key: "LOST",        label: "Lost",        color: "#dc2626", bg: "#fee2e2" },
 ];
 
+// Matches backend STALE_DEAL_DAYS in deal.routes.ts — keep these in sync.
+const STALE_DAYS = 5;
+
 const fmt = (d) => d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
 const fmtMoney = (v) => v != null ? `$${Number(v).toLocaleString()}` : null;
+
+const daysSince = (d) => d ? Math.floor((Date.now() - new Date(d).getTime()) / 86400000) : null;
+const isStale = (deal) =>
+  !["WON", "LOST"].includes(deal.stage) &&
+  deal.lastActivityAt != null &&
+  daysSince(deal.lastActivityAt) >= STALE_DAYS;
 
 const initForm = { title: "", value: "", currency: "USD", stage: "LEAD", probability: "", expectedCloseDate: "", notes: "" };
 
@@ -113,6 +122,7 @@ const DealForm = ({ deal, defaultStage, onClose, onSave }) => {
 // ── Deal Card ─────────────────────────────────────────────────────
 const DealCard = ({ deal, index, onEdit, onDelete, onClick }) => {
   const stage = STAGES.find((s) => s.key === deal.stage) || STAGES[0];
+  const stale = isStale(deal);
 
   const handleEdit = (e) => { e.stopPropagation(); onEdit(deal); };
   const handleDel  = (e) => {
@@ -148,6 +158,11 @@ const DealCard = ({ deal, index, onEdit, onDelete, onClick }) => {
               <span className="dc-date"><UilCalendarAlt size={12} />{fmt(deal.expectedCloseDate)}</span>
             )}
           </div>
+          {stale && (
+            <div className="dc-stale-badge" title={`No activity in ${daysSince(deal.lastActivityAt)} days`}>
+              <UilClock size={12} /> Quiet {daysSince(deal.lastActivityAt)}d
+            </div>
+          )}
           {deal.probability != null && (
             <div className="dc-prob-bar">
               <div className="dc-prob-fill" style={{ width: `${deal.probability}%`, background: stage.color }} />
@@ -206,6 +221,7 @@ const KanbanColumn = ({ stage, deals, onAddDeal, onEdit, onDelete, onCardClick }
 // ── Deal Detail Side Panel ────────────────────────────────────────
 const DealDetail = ({ deal, onClose, onEdit, onDelete }) => {
   const stage = STAGES.find((s) => s.key === deal.stage) || STAGES[0];
+  const stale = isStale(deal);
 
   const handleDelete = () => {
     if (window.confirm(`Delete "${deal.title}"?`)) { onDelete(deal.id); onClose(); }
@@ -223,12 +239,23 @@ const DealDetail = ({ deal, onClose, onEdit, onDelete }) => {
       </div>
       <div className="dd-stage">
         <span style={{ background: stage.bg, color: stage.color }}>{stage.label}</span>
+        {stale && (
+          <span className="dd-stale-pill" title={`No activity in ${daysSince(deal.lastActivityAt)} days`}>
+            <UilClock size={12} /> Quiet {daysSince(deal.lastActivityAt)}d
+          </span>
+        )}
       </div>
       <div className="dd-section">
         {deal.value != null && <div className="dd-row"><span>Value</span><strong>{fmtMoney(deal.value)} {deal.currency}</strong></div>}
         {deal.probability != null && <div className="dd-row"><span>Probability</span><strong>{deal.probability}%</strong></div>}
         {deal.expectedCloseDate && <div className="dd-row"><span>Close Date</span><strong>{fmt(deal.expectedCloseDate)}</strong></div>}
         <div className="dd-row"><span>Created</span><strong>{fmt(deal.createdAt)}</strong></div>
+        {deal.lastActivityAt && (
+          <div className="dd-row">
+            <span>Last Activity</span>
+            <strong className={stale ? "dd-stale-text" : ""}>{fmt(deal.lastActivityAt)}</strong>
+          </div>
+        )}
       </div>
       {deal.contact && (
         <div className="dd-section">

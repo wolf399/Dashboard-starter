@@ -256,6 +256,21 @@
 }
 .dc-contact svg, .dc-date svg { flex-shrink: 0; color: #94a3b8; }
 
+.dc-stale-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #b45309;
+  background: #fef3c7;
+  width: fit-content;
+}
+.dc-stale-badge svg { flex-shrink: 0; }
+
 .dc-prob-bar {
   height: 3px;
   background: #f1f5f9;
@@ -297,7 +312,13 @@
   line-height: 1.3;
 }
 
-.dd-stage { margin-bottom: 12px; }
+.dd-stage {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .dd-stage span {
   font-size: 0.72rem;
   font-weight: 700;
@@ -306,6 +327,23 @@
   border-radius: 5px;
   padding: 3px 10px;
 }
+
+.dd-stale-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #b45309;
+  background: #fef3c7;
+}
+.dd-stale-pill svg { flex-shrink: 0; }
+
+.dd-stale-text { color: #b45309 !important; }
 
 .dd-section {
   margin-bottom: 14px;
