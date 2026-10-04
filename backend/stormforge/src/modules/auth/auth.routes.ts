@@ -26,9 +26,12 @@ const authRoutes = async (fastify: FastifyInstance) => {
   // REGISTER - POST /api/auth/register
   fastify.post<{ Body: RegisterBody }>('/register', {
     schema: registerSchema,
+    // Tighter limit than the global 100/min — registration is cheap to
+    // abuse for spam-account creation / enumeration if left uncapped.
+    config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
     handler: async (request, reply) => {
       try {
-        const { name, email, password, role, inviteToken, organizationName } = request.body;
+        const { name, email, password, inviteToken, organizationName } = request.body;
 
         const existing = await fastify.prisma.user.findUnique({ where: { email } });
         if (existing) {
@@ -73,7 +76,15 @@ const authRoutes = async (fastify: FastifyInstance) => {
             name,
             email,
             password: hashedPassword,
-            role: inviteToken ? (role || 'AGENT') : 'ADMIN',
+            // Role is NEVER taken from the client. Someone registering
+            // fresh (no invite) is the org's first user, so ADMIN is
+            // correct. Someone joining via invite is always AGENT —
+            // previously `role` came straight from request.body, letting
+            // an invited user self-promote to ADMIN by just sending
+            // { role: "ADMIN" }. Per-invite roles can be added later by
+            // storing a role on the Invite model itself, not by trusting
+            // the registering client.
+            role: inviteToken ? 'AGENT' : 'ADMIN',
             organizationId,
           },
         });
@@ -97,6 +108,8 @@ const authRoutes = async (fastify: FastifyInstance) => {
   // LOGIN - POST /api/auth/login
   fastify.post<{ Body: LoginBody }>('/login', {
     schema: loginSchema,
+    // Brute-force protection: far tighter than the global 100/min.
+    config: { rateLimit: { max: 8, timeWindow: '1 minute' } },
     handler: async (request, reply) => {
       try {
         const { email, password } = request.body;
