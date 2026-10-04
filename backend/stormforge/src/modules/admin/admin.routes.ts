@@ -1,8 +1,17 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 
 export default async function adminRoutes(fastify: FastifyInstance) {
-  // Get all users (admin endpoint for tracking signups)
-  fastify.get('/users', async (request: FastifyRequest, reply: FastifyReply) => {
+  // Platform-admin check — this is YOU, not an org admin. Since there's no
+  // platform-level role in the User model yet, gate this the same way as
+  // the cron endpoint: a secret only you have, passed as a header.
+  const requirePlatformAdmin = async (request: FastifyRequest, reply: FastifyReply) => {
+    const secret = request.headers['x-admin-secret'];
+    if (secret !== process.env.PLATFORM_ADMIN_SECRET) {
+      return reply.status(401).send({ error: 'UNAUTHORIZED' });
+    }
+  };
+
+  fastify.get('/users', { preHandler: requirePlatformAdmin }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const users = await fastify.prisma.user.findMany({
         select: {
@@ -40,8 +49,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Get user count (quick check)
-  fastify.get('/users/count', async (request: FastifyRequest, reply: FastifyReply) => {
+  fastify.get('/users/count', { preHandler: requirePlatformAdmin }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const count = await fastify.prisma.user.count();
       return reply.send({
