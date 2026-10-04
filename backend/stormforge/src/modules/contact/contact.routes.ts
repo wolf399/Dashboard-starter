@@ -105,7 +105,15 @@ const contactRoutes = async (fastify: FastifyInstance) => {
       const { id } = request.params;
       const contact = await fastify.prisma.contact.findFirst({ where: { id, organizationId: user.organizationId } });
       if (!contact) return reply.status(404).send({ error: 'NOT_FOUND', message: 'Contact not found' });
-      const updated = await fastify.prisma.contact.update({ where: { id }, data: request.body });
+
+      // Whitelist updatable fields explicitly — never spread/pass request.body
+      // straight to Prisma, since organizationId (and any other model field)
+      // would otherwise be writable by the caller.
+      const { firstName, lastName, email, phone, company, jobTitle, source, status, notes, tags } = request.body;
+      const updated = await fastify.prisma.contact.update({
+        where: { id },
+        data: { firstName, lastName, email, phone, company, jobTitle, source, status, notes, tags },
+      });
       return updated;
     },
   });

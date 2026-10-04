@@ -34,6 +34,20 @@ const isTest = process.env.NODE_ENV === 'test' || process.env.VITEST !== undefin
 
 dotenv.config();
 
+// Fail fast instead of silently falling back to a guessable secret.
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
+
+// Lock CORS down to your actual frontend domain(s) instead of reflecting
+// every origin. Add any additional domains (custom domain, preview URLs) here.
+const allowedOrigins = [
+  'https://agentcrm.company',
+  'https://dashboard-starter-self.vercel.app',
+  ...(isTest || process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : []),
+];
+
 export const build = async () => {
   const fastify = Fastify({
   logger: false,
@@ -41,10 +55,21 @@ export const build = async () => {
   });
 
   await fastify.register(sensible);
-  await fastify.register(jwt, { secret: process.env.JWT_SECRET || 'fallback-secret' });
+  await fastify.register(jwt, { secret: jwtSecret });
   await fastify.register(prismaPlugin);
   await fastify.register(compress, { global: true, encodings: ['gzip', 'deflate'], threshold: 1024 });
-  await fastify.register(cors, { origin: true, credentials: true, methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'] });
+  await fastify.register(cors, {
+    origin: (origin, cb) => {
+      // Allow non-browser requests (no Origin header, e.g. server-to-server, curl, cron)
+      if (!origin || allowedOrigins.includes(origin)) {
+        cb(null, true);
+        return;
+      }
+      cb(new Error('Not allowed by CORS'), false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  });
   await fastify.register(helmet, {
     contentSecurityPolicy: { directives: { defaultSrc: ["'self'"], styleSrc: ["'self'", "'unsafe-inline'"], scriptSrc: ["'self'"] } },
     crossOriginEmbedderPolicy: false,
