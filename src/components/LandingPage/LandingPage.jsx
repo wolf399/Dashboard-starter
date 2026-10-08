@@ -527,8 +527,8 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
             </div>
             <div className="footer-col">
               <h4>Legal</h4>
-              <a href="#">Privacy</a>
-              <a href="#">Terms</a>
+              <a href="/privacy.html">Privacy</a>
+              <a href="/terms.html">Terms</a>
               <a href="/impressum">Impressum</a>
             </div>
           </div>
