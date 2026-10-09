@@ -80,22 +80,31 @@ const customerRoutes = async (fastify: FastifyInstance) => {
   });
 
   fastify.patch<{ Params: CustomerParams; Body: UpdateCustomerBody }>('/:id', {
-    schema: updateCustomerSchema,
-    handler: async (request, reply) => {
-      const user = await request.jwtVerify() as any;
-      const { id } = request.params;
-      const customer = await fastify.prisma.customer.findFirst({
-        where: { id, organizationId: user.organizationId },
-      });
-      if (!customer) return reply.status(404).send({ error: 'NOT_FOUND', message: 'Customer not found' });
-      const updated = await fastify.prisma.customer.update({
-        where: { id },
-        data: { ...request.body, lastActivity: new Date() },
-      });
-      return updated;
-    },
-  });
+  schema: updateCustomerSchema,
+  handler: async (request, reply) => {
+    const user = await request.jwtVerify() as any;
+    const { id } = request.params;
+    const customer = await fastify.prisma.customer.findFirst({
+      where: { id, organizationId: user.organizationId },
+    });
+    if (!customer) return reply.status(404).send({ error: 'NOT_FOUND', message: 'Customer not found' });
 
+    const { name, email, phone, company, status, tags } = request.body;
+    const updated = await fastify.prisma.customer.update({
+      where: { id },
+      data: {
+        ...(name !== undefined ? { name } : {}),
+        ...(email !== undefined ? { email } : {}),
+        ...(phone !== undefined ? { phone } : {}),
+        ...(company !== undefined ? { company } : {}),
+        ...(status !== undefined ? { status } : {}),
+        ...(tags !== undefined ? { tags } : {}),
+        lastActivity: new Date(),
+      },
+    });
+    return updated;
+  },
+});
   fastify.delete<{ Params: CustomerParams }>('/:id', {
     schema: deleteCustomerSchema,
     handler: async (request, reply) => {

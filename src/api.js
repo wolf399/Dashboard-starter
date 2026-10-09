@@ -265,14 +265,7 @@ export const validateInvite = async (token) => {
   return data;
 };
 
-export const markInviteUsed = async (token) => {
-  const res = await fetch(`${BASE_URL}/invites/use/${token}`, {
-    method: 'PATCH',
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message);
-  return data;
-};
+
 
 // ORGANIZATION
 export const getOrganization = async () => {

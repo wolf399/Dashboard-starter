@@ -1,17 +1,17 @@
 export const schemas = {
   registerBody: {
-    $id: 'registerBody',
-    type: 'object',
-    required: ['email', 'password', 'name'],
-    properties: {
-      name:             { type: 'string', minLength: 1, maxLength: 100 },
-      email:            { type: 'string', format: 'email' },
-      password:         { type: 'string', minLength: 6 },
-      role:             { type: 'string', enum: ['ADMIN', 'AGENT'] },
-      organizationName: { type: 'string' },
-      inviteToken:      { type: 'string' },
-    },
+  $id: 'registerBody',
+  type: 'object',
+  additionalProperties: false,
+  required: ['email', 'password', 'name'],
+  properties: {
+    name:             { type: 'string', minLength: 1, maxLength: 100 },
+    email:            { type: 'string', format: 'email' },
+    password:         { type: 'string', minLength: 6 },
+    organizationName: { type: 'string' },
+    inviteToken:      { type: 'string' },
   },
+ },
 
   loginBody: {
     $id: 'loginBody',

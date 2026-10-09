@@ -79,23 +79,39 @@ const taskRoutes = async (fastify: FastifyInstance) => {
   });
 
   fastify.patch<{ Params: TaskParams; Body: UpdateTaskBody }>('/:id', {
-    schema: updateTaskSchema,
-    handler: async (request, reply) => {
-      const user = await request.jwtVerify() as any;
-      const { id } = request.params;
-      const { dueDate, ...rest } = request.body;
-      const task = await fastify.prisma.task.findFirst({
-        where: { id, organizationId: user.organizationId },
+  schema: updateTaskSchema,
+  handler: async (request, reply) => {
+    const user = await request.jwtVerify() as any;
+    const { id } = request.params;
+    const { title, description, dueDate, priority, status, assignedToId } = request.body;
+    const task = await fastify.prisma.task.findFirst({
+      where: { id, organizationId: user.organizationId },
+    });
+    if (!task) return reply.status(404).send({ error: 'NOT_FOUND', message: 'Task not found' });
+
+    // Verify assignedToId (if changing) belongs to this org before linking it
+    if (assignedToId !== undefined && assignedToId !== null) {
+      const assignee = await fastify.prisma.user.findFirst({
+        where: { id: assignedToId, organizationId: user.organizationId },
       });
-      if (!task) return reply.status(404).send({ error: 'NOT_FOUND', message: 'Task not found' });
-      const updated = await fastify.prisma.task.update({
-        where: { id },
-        data: { ...rest, ...(dueDate !== undefined ? { dueDate: dueDate ? new Date(dueDate) : null } : {}) },
-        include: { assignedTo: true, createdBy: true, ticket: true },
-      });
-      return updated;
-    },
-  });
+      if (!assignee) return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Invalid assignedToId' });
+    }
+
+    const updated = await fastify.prisma.task.update({
+      where: { id },
+      data: {
+        ...(title !== undefined ? { title } : {}),
+        ...(description !== undefined ? { description } : {}),
+        ...(priority !== undefined ? { priority } : {}),
+        ...(status !== undefined ? { status } : {}),
+        ...(assignedToId !== undefined ? { assignedToId } : {}),
+        ...(dueDate !== undefined ? { dueDate: dueDate ? new Date(dueDate) : null } : {}),
+      },
+      include: { assignedTo: true, createdBy: true, ticket: true },
+    });
+    return updated;
+  },
+});
 
   fastify.delete<{ Params: TaskParams }>('/:id', {
     schema: deleteTaskSchema,

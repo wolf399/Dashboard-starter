@@ -20,7 +20,8 @@ export const schemas = {
   createTaskBody: {
     $id: 'createTaskBody',
     type: 'object',
-    required: ['title', 'createdById'],
+    additionalProperties: false,
+    required: ['title'],
     properties: {
       title:        { type: 'string', minLength: 1, maxLength: 200 },
       description:  { type: 'string' },
@@ -29,13 +30,13 @@ export const schemas = {
       assignedToId: { type: 'string', nullable: true },
       ticketId:     { type: 'string', nullable: true },
       contactId:    { type: 'string', nullable: true },
-      createdById:  { type: 'string' },
     },
   },
 
   updateTaskBody: {
     $id: 'updateTaskBody',
     type: 'object',
+    additionalProperties: false,
     properties: {
       title:        { type: 'string', minLength: 1, maxLength: 200 },
       description:  { type: 'string' },

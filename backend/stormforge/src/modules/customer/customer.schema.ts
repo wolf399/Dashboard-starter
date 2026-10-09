@@ -17,17 +17,18 @@ export const schemas = {
   },
 
   createCustomerBody: {
-    $id: 'createCustomerBody',
-    type: 'object',
-    required: ['name'],
-    properties: {
-      name:    { type: 'string', minLength: 1, maxLength: 100 },
-      email:   { type: 'string', format: 'email', nullable: true },
-      phone:   { type: 'string', nullable: true },
-      company: { type: 'string', nullable: true },
-      tags:    { type: 'string', nullable: true },
-    },
+  $id: 'createCustomerBody',
+  type: 'object',
+  additionalProperties: false,
+  required: ['name'],
+  properties: {
+    name:    { type: 'string', minLength: 1, maxLength: 100 },
+    email:   { type: 'string', format: 'email', nullable: true },
+    phone:   { type: 'string', nullable: true },
+    company: { type: 'string', nullable: true },
+    tags:    { type: 'string', nullable: true },
   },
+},
   createCustomerResponse: {
     $id: 'createCustomerResponse',
     allOf: [{ $ref: 'customer' }],

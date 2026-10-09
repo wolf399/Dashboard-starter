@@ -27,13 +27,5 @@ export default async function inviteRoutes(fastify: FastifyInstance) {
     return { valid: true, organizationId: invite.organizationId };
   });
 
-  // Mark invite as used
-  fastify.patch('/use/:token', async (request: any, reply: any) => {
-    const { token } = request.params;
-    await fastify.prisma.invite.update({
-      where: { token },
-      data: { usedAt: new Date() },
-    });
-    return { success: true };
-  });
+  
 }

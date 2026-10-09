@@ -124,23 +124,40 @@ const dealRoutes = async (fastify: FastifyInstance) => {
     handler: async (request, reply) => {
       const user = await request.jwtVerify() as any;
       const { id } = request.params;
-      const { expectedCloseDate, contactId, customerId, assignedAgentId, ...rest } = request.body;
+      const { title, value, currency, stage, probability, expectedCloseDate, notes, contactId, customerId, assignedAgentId } = request.body;
 
       const deal = await fastify.prisma.deal.findFirst({ where: { id, organizationId: user.organizationId } });
       if (!deal) return reply.status(404).send({ error: 'NOT_FOUND', message: 'Deal not found' });
 
-      const stageChanged = rest.stage !== undefined && rest.stage !== deal.stage;
+      // Verify any linked records actually belong to this org before linking them
+      if (contactId) {
+        const contact = await fastify.prisma.contact.findFirst({ where: { id: contactId, organizationId: user.organizationId } });
+        if (!contact) return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Invalid contactId' });
+      }
+      if (customerId) {
+        const customer = await fastify.prisma.customer.findFirst({ where: { id: customerId, organizationId: user.organizationId } });
+        if (!customer) return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Invalid customerId' });
+      }
+      if (assignedAgentId) {
+        const agent = await fastify.prisma.user.findFirst({ where: { id: assignedAgentId, organizationId: user.organizationId } });
+        if (!agent) return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Invalid assignedAgentId' });
+      }
+
+      const stageChanged = stage !== undefined && stage !== deal.stage;
 
       const updated = await fastify.prisma.deal.update({
         where: { id },
         data: {
-          ...rest,
+          ...(title !== undefined ? { title } : {}),
+          ...(value !== undefined ? { value } : {}),
+          ...(currency !== undefined ? { currency } : {}),
+          ...(stage !== undefined ? { stage } : {}),
+          ...(probability !== undefined ? { probability } : {}),
+          ...(notes !== undefined ? { notes } : {}),
           ...(expectedCloseDate !== undefined ? { expectedCloseDate: expectedCloseDate ? new Date(expectedCloseDate) : null } : {}),
-          ...(contactId      !== undefined ? { contactId:      contactId      || null } : {}),
-          ...(customerId     !== undefined ? { customerId:     customerId     || null } : {}),
+          ...(contactId !== undefined ? { contactId: contactId || null } : {}),
+          ...(customerId !== undefined ? { customerId: customerId || null } : {}),
           ...(assignedAgentId !== undefined ? { assignedAgentId: assignedAgentId || null } : {}),
-          // Any PATCH counts as "something happened on this deal" — that's
-          // the signal the stale-deal check reads to decide who's gone quiet.
           lastActivityAt: new Date(),
         },
         include: {
@@ -155,7 +172,7 @@ const dealRoutes = async (fastify: FastifyInstance) => {
           data: {
             dealId: id,
             type: 'STAGE_CHANGE',
-            content: `Stage changed from ${deal.stage} to ${rest.stage}`,
+            content: `Stage changed from ${deal.stage} to ${stage}`,
           },
         });
       }
