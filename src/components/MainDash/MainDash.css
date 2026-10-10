@@ -7,8 +7,9 @@
   font-family: var(--font-family);
   background: var(--color-bg);
   color: var(--color-text-primary);
-  min-height: 100%;
+  height: 100%;
   width: 100%;
+  overflow-y: auto;
 }
 
 .MainDash *,
