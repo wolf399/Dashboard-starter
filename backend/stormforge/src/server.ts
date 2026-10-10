@@ -54,6 +54,23 @@ export const build = async () => {
   disableRequestLogging: true,
   });
 
+  // Fastify's default JSON parser rejects requests with Content-Type: application/json
+  // but an empty body (common on DELETE calls that send no body but still set the
+  // header). Override it to treat an empty body as "no JSON" instead of a parse error.
+  fastify.addContentTypeParser('application/json', { parseAs: 'string' }, function (req, body, done) {
+    if (body === '' || body == null) {
+      done(null, undefined);
+      return;
+    }
+    try {
+      const json = JSON.parse(body as string);
+      done(null, json);
+    } catch (err: any) {
+      err.statusCode = 400;
+      done(err, undefined);
+    }
+  });
+
   await fastify.register(sensible);
   await fastify.register(jwt, { secret: jwtSecret });
   await fastify.register(prismaPlugin);
