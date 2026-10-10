@@ -8,7 +8,7 @@ import Settings from "../Settings/Settings";
 import Contacts from "../Contacts/Contacts";
 import ContactDetail from "../Contacts/ContactDetail";
 import Pipeline from "../Pipeline/Pipeline";
-import { getTasks, getDeals } from "../../api";
+import { getTasks, getDeals, getContacts, getDealStats, updateTicket } from "../../api";
 import "./MainDash.css";
 
 const STALE_DEAL_DAYS = 5;
@@ -27,14 +27,18 @@ const MainDash = ({
 }) => {
   const [dashTasks, setDashTasks] = useState([]);
   const [dashDeals, setDashDeals] = useState([]);
+  const [dashContacts, setDashContacts] = useState([]);
+  const [dashDealStats, setDashDealStats] = useState(null);
   const [dashLoading, setDashLoading] = useState(true);
 
   useEffect(() => {
     if (activeView !== "Dashboard") return;
-    Promise.all([getTasks(), getDeals()])
-      .then(([t, d]) => {
+    Promise.all([getTasks(), getDeals(), getContacts(), getDealStats()])
+      .then(([t, d, c, stats]) => {
         setDashTasks(t.tasks || t || []);
         setDashDeals(d.deals || d || []);
+        setDashContacts(c.contacts || c || []);
+        setDashDealStats(stats);
       })
       .catch(console.error)
       .finally(() => setDashLoading(false));
@@ -63,6 +67,36 @@ const MainDash = ({
     .sort((a, b) => new Date(a.lastActivityAt) - new Date(b.lastActivityAt))
     .slice(0, 5);
 
+  const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const newContacts = dashContacts
+    .filter((c) => c.createdAt && new Date(c.createdAt) > last24h)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5);
+
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const closedThisWeek = tickets.filter(
+    (t) => t.status === "CLOSED" && t.updatedAt && t.createdAt && new Date(t.updatedAt) >= weekAgo
+  );
+  const avgResolutionHours = closedThisWeek.length > 0
+    ? Math.round(
+        closedThisWeek.reduce((sum, t) => sum + (new Date(t.updatedAt) - new Date(t.createdAt)), 0) /
+          closedThisWeek.length /
+          (1000 * 60 * 60)
+      )
+    : null;
+
+  const handleResolve = async (e, ticket) => {
+    e.stopPropagation();
+    try {
+      const updated = await updateTicket(ticket.id, { status: "CLOSED" });
+      onTicketUpdate(updated?.id ? updated : { ...ticket, status: "CLOSED" });
+      if (addToast) addToast("Ticket marked resolved");
+    } catch (err) {
+      console.error(err);
+      if (addToast) addToast("Failed to resolve ticket");
+    }
+  };
+
   return (
     <div className="MainDash">
       {activeView === "Dashboard" && (
@@ -72,6 +106,12 @@ const MainDash = ({
             <span className="dashboard-date">
               {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
             </span>
+          </div>
+
+          <div className="dashboard-quick-actions">
+            <button className="dashboard-quick-btn" onClick={() => setActiveView("Tasks")}>+ New Task</button>
+            <button className="dashboard-quick-btn" onClick={() => setActiveView("Contacts")}>+ New Contact</button>
+            <button className="dashboard-quick-btn" onClick={() => setActiveView("Pipeline")}>+ New Deal</button>
           </div>
 
           <div className="dashboard-stat-row">
@@ -91,6 +131,22 @@ const MainDash = ({
               <span className="dashboard-stat-label">Resolved Today</span>
               <strong className="dashboard-stat-value" style={{ color: "#16a34a" }}>{resolvedToday}</strong>
             </div>
+            <div className="dashboard-stat-card">
+              <span className="dashboard-stat-label">New Contacts (24h)</span>
+              <strong className="dashboard-stat-value" style={{ color: "#2563eb" }}>{newContacts.length}</strong>
+            </div>
+            <div className="dashboard-stat-card">
+              <span className="dashboard-stat-label">Avg Resolution Time</span>
+              <strong className="dashboard-stat-value" style={{ color: "#111827" }}>
+                {avgResolutionHours !== null ? `${avgResolutionHours}h` : "—"}
+              </strong>
+            </div>
+            <div className="dashboard-stat-card">
+              <span className="dashboard-stat-label">Pipeline Value</span>
+              <strong className="dashboard-stat-value" style={{ color: "#111827" }}>
+                {dashDealStats ? `$${Number(dashDealStats.totalPipeline || 0).toLocaleString()}` : "—"}
+              </strong>
+            </div>
           </div>
 
           <div className="dashboard-panels">
@@ -107,6 +163,7 @@ const MainDash = ({
                         <span className="recent-customer">{t.customer?.name || "Unknown"}</span>
                         <span className="recent-subject">{t.subject}</span>
                       </div>
+                      <button className="dashboard-row-action" onClick={(e) => handleResolve(e, t)}>Resolve</button>
                       <span className="recent-status" style={{ background: "#fee2e2", color: "#dc2626" }}>
                         {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : ""}
                       </span>
@@ -162,6 +219,28 @@ const MainDash = ({
                       <span className="recent-status" style={{ background: "#f3f4f6", color: "#6b7280" }}>
                         {deal.lastActivityAt ? new Date(deal.lastActivityAt).toLocaleDateString() : ""}
                       </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="dashboard-panel">
+              <h2>New Signups (24h)</h2>
+              {dashLoading ? (
+                <div className="dashboard-empty">Loading...</div>
+              ) : newContacts.length === 0 ? (
+                <div className="dashboard-empty">No new contacts in the last 24 hours.</div>
+              ) : (
+                <div className="recent-list">
+                  {newContacts.map((c) => (
+                    <div key={c.id} className="recent-row" onClick={() => setActiveView("Contacts")}>
+                      <div className="recent-avatar">{c.firstName?.charAt(0) || "?"}</div>
+                      <div className="recent-info">
+                        <span className="recent-customer">{c.firstName} {c.lastName}</span>
+                        <span className="recent-subject">{c.company || c.email || ""}</span>
+                      </div>
+                      <span className="recent-status" style={{ background: "#dbeafe", color: "#2563eb" }}>New</span>
                     </div>
                   ))}
                 </div>

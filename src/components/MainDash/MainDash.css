@@ -1,164 +1,249 @@
+/* ==========================================================================
+   MainDash — design tokens
+   ========================================================================== */
 .MainDash {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-  height: 100vh;
-  overflow: hidden;
-  background: #f9fafb;
+  --color-bg: #f5f8fa;
+  --color-surface: #ffffff;
+  --color-border: #e5e9ec;
+  --color-text-primary: #33475b;
+  --color-text-secondary: #516f90;
+  --color-text-muted: #7c98b6;
+  --color-accent: #0091ae;
+  --color-accent-dark: #00748a;
+  --color-success-bg: #d6f5e0;
+  --color-success-text: #00bda5;
+  --color-success-strong: #16a34a;
+  --color-danger-bg: #fde2e2;
+  --color-danger-text: #e04b4b;
+  --color-warning-bg: #fef3c7;
+  --color-warning-text: #d97706;
+  --color-info-bg: #dbeafe;
+  --color-info-text: #2563eb;
+  --color-neutral-bg: #f3f4f6;
+  --color-neutral-text: #6b7280;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --shadow-card: 0 1px 2px rgba(33, 47, 61, 0.06), 0 1px 1px rgba(33, 47, 61, 0.04);
+  --shadow-card-hover: 0 4px 12px rgba(33, 47, 61, 0.08), 0 1px 2px rgba(33, 47, 61, 0.06);
+
+  --font-family: "Lexend Deca", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+
+  font-family: var(--font-family);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  min-height: 100%;
 }
 
-/* ── Dashboard ── */
+.MainDash *,
+.MainDash *::before,
+.MainDash *::after {
+  box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .MainDash * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   Dashboard view shell
+   ========================================================================== */
 .dashboard-view {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  height: 100%;
-  overflow-y: auto;
+  padding: var(--space-5) var(--space-6);
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
 .dashboard-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 .dashboard-header h1 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .dashboard-date {
-  font-size: 0.875rem;
-  color: #9ca3af;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
 }
 
-/* ── Dashboard: stat row ── */
+/* ==========================================================================
+   Quick-create action bar
+   ========================================================================== */
+.dashboard-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.dashboard-quick-btn {
+  background: var(--color-surface);
+  color: var(--color-accent-dark);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--shadow-card);
+}
+
+.dashboard-quick-btn:hover {
+  background: #f0faFb;
+  border-color: var(--color-accent);
+}
+
+.dashboard-quick-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.dashboard-quick-btn:active {
+  transform: translateY(1px);
+}
+
+/* ==========================================================================
+   Stat row
+   ========================================================================== */
 .dashboard-stat-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
 .dashboard-stat-card {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  padding: 1.1rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.dashboard-stat-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
 }
 
 .dashboard-stat-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #9ca3af;
+  font-size: 0.75rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
 }
 
 .dashboard-stat-value {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: #111827;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── Dashboard: panels ── */
+/* ==========================================================================
+   Panels grid
+   ========================================================================== */
 .dashboard-panels {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.25rem;
+  gap: var(--space-4);
 }
 
 .dashboard-panel {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
 }
 
 .dashboard-panel h2 {
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #374151;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid #f3f4f6;
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-3) 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .dashboard-empty {
-  padding: 2rem 1.25rem;
-  text-align: center;
-  color: #9ca3af;
   font-size: 0.85rem;
+  color: var(--color-text-muted);
+  padding: var(--space-4) var(--space-2);
+  text-align: center;
 }
 
-/* Responsive: stack stat cards on small screens */
-@media (max-width: 900px) {
-  .dashboard-stat-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.recent-tickets {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  overflow: hidden;
-}
-
-.recent-tickets h2 {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #374151;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid #f3f4f6;
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
+/* ==========================================================================
+   Row list (shared by panels)
+   ========================================================================== */
 .recent-list {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .recent-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid #f9fafb;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s ease;
 }
 
-.recent-row:last-child { border-bottom: none; }
-.recent-row:hover { background: #f9fafb; }
+.recent-row:hover {
+  background: var(--color-bg);
+}
+
+.recent-row:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
 
 .recent-avatar {
+  flex-shrink: 0;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #16a34a, #15803d);
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.8rem;
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .recent-info {
@@ -170,76 +255,126 @@
 }
 
 .recent-customer {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .recent-subject {
   font-size: 0.78rem;
-  color: #9ca3af;
+  color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .recent-status {
-  font-size: 0.68rem;
+  flex-shrink: 0;
+  font-size: 0.7rem;
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-/* ── Inbox ── */
+.dashboard-row-action {
+  flex-shrink: 0;
+  background: var(--color-neutral-bg);
+  color: var(--color-text-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dashboard-row-action:hover {
+  background: #e5e7eb;
+}
+
+.dashboard-row-action:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Inbox split view
+   ========================================================================== */
 .inboxContainer {
   display: flex;
-  flex-direction: row;
-  width: 100%;
   height: 100%;
-  overflow: hidden;
-  background: #ffffff;
+  min-height: 0;
 }
 
 .detailsWrapper {
   flex: 1;
   min-width: 0;
-  height: 100%;
-  overflow: hidden;
-  border-top: 3px solid #16a34a;
   display: flex;
   flex-direction: column;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .empty-state {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  color: #9ca3af;
-  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  padding: var(--space-6);
+  text-align: center;
 }
 
-/* ── Shared view containers ── */
+/* ==========================================================================
+   Other view containers
+   ========================================================================== */
 .customers-view-container,
-.analytics-view-container,
-.tasks-view-container {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-}
 .contacts-view-container,
-.pipeline-view-container {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
+.pipeline-view-container,
+.analytics-view-container,
+.tasks-view-container,
 .settings-view-container {
-  width: 100%;
   height: 100%;
-  overflow-y: auto;
+  min-height: 0;
+  background: var(--color-bg);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 900px) {
+  .dashboard-view {
+    padding: var(--space-4);
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-stat-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .dashboard-stat-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-quick-actions {
+    flex-direction: column;
+  }
+
+  .dashboard-quick-btn {
+    width: 100%;
+    text-align: center;
+  }
 }
