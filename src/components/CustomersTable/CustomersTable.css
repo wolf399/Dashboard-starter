@@ -1,3 +1,5 @@
+@import "../../styles/tokens.css";
+
 .customer-table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -52,7 +54,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #16a34a, #15803d);
+  background: linear-gradient(135deg, var(--color-brand), var(--color-brand-dark));
   color: #fff;
   font-weight: 700;
   font-size: 0.9rem;

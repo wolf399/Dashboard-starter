@@ -1,3 +1,5 @@
+@import "../../styles/tokens.css";
+
 .Inbox {
   flex-shrink: 0;
   width: 300px;
@@ -7,7 +9,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-family);
 }
 
 /* Header */
@@ -36,8 +38,8 @@
 }
 
 .inbox-count {
-  background: #e8f4e8;
-  color: #2d6a2d;
+  background: var(--color-brand-light);
+  color: var(--color-brand-dark);
   font-size: 0.67rem;
   font-weight: 700;
   padding: 2px 7px;
@@ -49,7 +51,7 @@
   width: 26px;
   height: 26px;
   border-radius: 7px;
-  background: #2d7a2d;
+  background: var(--color-brand);
   color: #fff;
   border: none;
   cursor: pointer;
@@ -60,7 +62,7 @@
   flex-shrink: 0;
 }
 
-.inbox-new-btn:hover { background: #246424; }
+.inbox-new-btn:hover { background: var(--color-brand-dark); }
 
 /* Search */
 .inbox-search {
@@ -77,8 +79,8 @@
 }
 
 .inbox-search:focus-within {
-  border-color: #2d7a2d;
-  box-shadow: 0 0 0 3px rgba(45,122,45,0.08);
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
   background: #fff;
 }
 
@@ -136,18 +138,18 @@ button.filter-tab {
 }
 
 button.filter-tab:hover {
-  background: #f0f7f0;
-  color: #2d6a2d;
+  background: var(--color-brand-light);
+  color: var(--color-brand-dark);
 }
 
 button.filter-tab.active {
-  background: #e8f4e8;
-  color: #1a4a1a;
+  background: var(--color-brand-light);
+  color: var(--color-brand-dark);
 }
 
 .filter-count {
-  background: rgba(45,122,45,0.15);
-  color: #2d6a2d;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-brand-dark);
   padding: 0 4px;
   border-radius: 4px;
   font-size: 0.6rem;
@@ -197,7 +199,7 @@ button.filter-tab:not(.active) .filter-count {
 .ticketRow {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
   padding: 0.7rem 0.75rem;
   cursor: pointer;
   border-radius: 8px;
@@ -211,7 +213,11 @@ button.filter-tab:not(.active) .filter-count {
 
 .ticketRow.active {
   background: #eef7ee;
-  box-shadow: inset 3px 0 0 #2d7a2d;
+  box-shadow: inset 3px 0 0 var(--color-brand);
+}
+
+.ticketRow.selected {
+  background: #eef7ee;
 }
 
 /* Unread indicator */
@@ -223,7 +229,7 @@ button.filter-tab:not(.active) .filter-count {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #2d7a2d;
+  background: var(--color-brand);
   flex-shrink: 0;
 }
 
@@ -319,7 +325,7 @@ button.filter-tab:not(.active) .filter-count {
   flex-shrink: 0;
 }
 
-/* Status colors – green-tinted palette */
+/* Status colors – unchanged, already a cohesive set */
 .status-open    { background: #e8f4e8; color: #1a6a1a; }
 .status-pending { background: #fef6e4; color: #8a5e00; }
 .status-closed  { background: #f0f4f0; color: #5a745a; }
@@ -387,7 +393,7 @@ button.filter-tab:not(.active) .filter-count {
   transition: all 0.15s;
 }
 
-.modal-close:hover { background: #f0f7f0; color: #2d6a2d; }
+.modal-close:hover { background: #f0f7f0; color: var(--color-brand-dark); }
 
 .modal-body {
   padding: 1.25rem;
@@ -442,8 +448,8 @@ button.filter-tab:not(.active) .filter-count {
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-  border-color: #2d7a2d;
-  box-shadow: 0 0 0 3px rgba(45,122,45,0.1);
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
 }
 
 .form-group textarea { resize: vertical; }
@@ -508,7 +514,7 @@ button.filter-tab:not(.active) .filter-count {
 .modal-cancel:hover { background: #f5f9f5; }
 
 .modal-save {
-  background: #2d7a2d;
+  background: var(--color-brand);
   color: #fff;
   border: none;
   border-radius: 7px;
@@ -521,15 +527,14 @@ button.filter-tab:not(.active) .filter-count {
   letter-spacing: 0.01em;
 }
 
-.modal-save:hover { background: #246424; }
+.modal-save:hover { background: var(--color-brand-dark); }
 .modal-save:disabled { opacity: 0.45; cursor: not-allowed; }
-/* ── Add these to the bottom of your Inbox.css ── */
 
 .bulk-checkbox {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-  accent-color: #2d7a2d;
+  accent-color: var(--color-brand);
   cursor: pointer;
   margin-top: 2px;
 }
@@ -550,20 +555,12 @@ button.filter-tab:not(.active) .filter-count {
   user-select: none;
 }
 
-.ticketRow.selected {
-  background: #eef7ee;
-}
-
-.ticketRow {
-  gap: 8px;
-}
-
 .bulk-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 7px 10px;
-  background: #1a5a1a;
+  background: var(--color-brand-dark);
   flex-shrink: 0;
 }
 
@@ -601,7 +598,7 @@ button.filter-tab:not(.active) .filter-count {
 
 .bulk-close {
   background: #fff;
-  color: #1a5a1a;
+  color: var(--color-brand-dark);
 }
 
 .bulk-close:hover { background: #f0f7f0; }

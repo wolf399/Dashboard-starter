@@ -1,43 +1,9 @@
+@import "../../styles/tokens.css";
+
 /* ==========================================================================
-   MainDash — design tokens
+   MainDash
    ========================================================================== */
 .MainDash {
-  --color-bg: #f5f8fa;
-  --color-surface: #ffffff;
-  --color-border: #e5e9ec;
-  --color-text-primary: #33475b;
-  --color-text-secondary: #516f90;
-  --color-text-muted: #7c98b6;
-  --color-accent: #0091ae;
-  --color-accent-dark: #00748a;
-  --color-success-bg: #d6f5e0;
-  --color-success-text: #00bda5;
-  --color-success-strong: #16a34a;
-  --color-danger-bg: #fde2e2;
-  --color-danger-text: #e04b4b;
-  --color-warning-bg: #fef3c7;
-  --color-warning-text: #d97706;
-  --color-info-bg: #dbeafe;
-  --color-info-text: #2563eb;
-  --color-neutral-bg: #f3f4f6;
-  --color-neutral-text: #6b7280;
-
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-
-  --shadow-card: 0 1px 2px rgba(33, 47, 61, 0.06), 0 1px 1px rgba(33, 47, 61, 0.04);
-  --shadow-card-hover: 0 4px 12px rgba(33, 47, 61, 0.08), 0 1px 2px rgba(33, 47, 61, 0.06);
-
-  --font-family: "Lexend Deca", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
-
   font-family: var(--font-family);
   background: var(--color-bg);
   color: var(--color-text-primary);
@@ -59,7 +25,7 @@
 }
 
 /* ==========================================================================
-   Dashboard view shell — full width, no artificial cap
+   Dashboard view shell
    ========================================================================== */
 .dashboard-view {
   padding: var(--space-5) var(--space-6);
@@ -101,7 +67,7 @@
 
 .dashboard-quick-btn {
   background: var(--color-surface);
-  color: var(--color-accent-dark);
+  color: var(--color-brand-dark);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 0.65rem 1.25rem;
@@ -114,12 +80,12 @@
 }
 
 .dashboard-quick-btn:hover {
-  background: #f0fafb;
-  border-color: var(--color-accent);
+  background: var(--color-brand-light);
+  border-color: var(--color-brand);
 }
 
 .dashboard-quick-btn:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
 
@@ -128,7 +94,7 @@
 }
 
 /* ==========================================================================
-   Stat row — sized to actually fill a wide screen
+   Stat row
    ========================================================================== */
 .dashboard-stat-row {
   display: grid;
@@ -170,7 +136,7 @@
 }
 
 /* ==========================================================================
-   Panels grid — wider minimum so panels fill the row on large screens
+   Panels grid
    ========================================================================== */
 .dashboard-panels {
   display: grid;
@@ -227,7 +193,7 @@
 }
 
 .recent-row:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-brand);
   outline-offset: -2px;
 }
 
@@ -299,7 +265,7 @@
 }
 
 .dashboard-row-action:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
 

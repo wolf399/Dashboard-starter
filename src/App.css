@@ -1,3 +1,5 @@
+@import "./styles/tokens.css";
+
 * {
   margin: 0;
   padding: 0;
@@ -10,7 +12,7 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-family);
   background: #f9fafb;
   height: 100vh;
 }
