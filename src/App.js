@@ -1,5 +1,6 @@
 import './App.css';
 import { Analytics } from '@vercel/analytics/react';
+import CookieConsent from "./components/CookieConsent/CookieConsent";
 import Sidebar from './components/Sidebar/Sidebar';
 import MainDash from './components/MainDash/MainDash';
 import LandingPage from './components/LandingPage/LandingPage';
@@ -117,23 +118,36 @@ function App() {
   };
 
   if (window.location.pathname === "/impressum") {
-    return <Impressum />;
+    return (
+      <>
+        <Impressum />
+        <CookieConsent />
+      </>
+    );
   }
 
   if (!isLoggedIn) {
     return (
-      <LandingPage
-        onEnterApp={() => setIsLoggedIn(true)}
-        onSignupSuccess={() => {
-          setIsLoggedIn(true);
-          if (!isOnboardingDone()) setShowOnboarding(true);
-        }}
-      />
+      <>
+        <LandingPage
+          onEnterApp={() => setIsLoggedIn(true)}
+          onSignupSuccess={() => {
+            setIsLoggedIn(true);
+            if (!isOnboardingDone()) setShowOnboarding(true);
+          }}
+        />
+        <CookieConsent />
+      </>
     );
   }
 
   if (showOnboarding) {
-    return <Onboarding onFinish={() => setShowOnboarding(false)} />;
+    return (
+      <>
+        <Onboarding onFinish={() => setShowOnboarding(false)} />
+        <CookieConsent />
+      </>
+    );
   }
 
   return (
@@ -158,6 +172,7 @@ function App() {
       </div>
       <Toast toasts={toasts} removeToast={removeToast} />
       <Analytics />
+      <CookieConsent />
     </div>
   );
 }
