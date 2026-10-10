@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Cards from "../Cards/Cards";
 import Inbox from "../Inbox/Inbox";
 import TicketDetails from "../TicketDetails/TicketDetails";
 import Customers from "../Customers/Customers";
