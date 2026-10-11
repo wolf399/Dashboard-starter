@@ -1078,6 +1078,133 @@
   margin: 0;
 }
 
+/* ── CONTACT ── */
+.contact-section {
+  padding: 6rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .contact-section { grid-template-columns: 1fr; gap: 2rem; }
+}
+
+.contact-copy .section-sub { margin-bottom: 0; }
+
+.contact-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.contact-form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+@media (max-width: 500px) {
+  .contact-form-row { flex-direction: column; }
+}
+
+.contact-form-row .contact-form-group { flex: 1; }
+
+.contact-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.contact-form-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.contact-form-group input,
+.contact-form-group textarea {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  color: #0f172a;
+  background: #fafafa;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.contact-form-group input:focus,
+.contact-form-group textarea:focus {
+  border-color: #16a34a;
+  background: #fff;
+}
+
+.contact-form-group textarea { resize: vertical; min-height: 110px; }
+
+.contact-form-error {
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+}
+
+.contact-form-submit {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.contact-form-submit:hover:not(:disabled) { background: #15803d; }
+.contact-form-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.contact-success {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.contact-success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f0fdf4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.contact-success h3 {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 1.1rem;
+  color: #0f172a;
+  margin-bottom: 0.4rem;
+}
+
+.contact-success p {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-bottom: 1.25rem;
+}
+
 /* ── COMING SOON ── */
 .coming-soon-badge {
   display: inline-block;

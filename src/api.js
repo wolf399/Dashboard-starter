@@ -248,6 +248,18 @@ export const sendEmail = async ({ to, subject, text, ticketId }) => {
   return data;
 };
 
+// PUBLIC CONTACT FORM (marketing site — no auth required)
+export const submitContactForm = async ({ name, email, company, message }) => {
+  const res = await fetch(`${BASE_URL}/contact`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, company, message }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
 // INVITES
 export const generateInvite = async () => {
   const res = await fetch(`${BASE_URL}/invites/generate`, {

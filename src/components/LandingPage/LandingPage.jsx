@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./LandingPage.css";
 import Login from "../Auth/Login";
 import Signup from "../Auth/Signup";
-import { loginWithGoogle } from "../../api";
+import { loginWithGoogle, submitContactForm } from "../../api";
 
 const FeatureIcon = ({ type, accent, bg }) => {
   const content = {
@@ -111,6 +111,74 @@ const IntegrationIcon = ({ type, color }) => {
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       {paths[type]}
     </svg>
+  );
+};
+
+const ContactForm = () => {
+  const [form, setForm] = useState({ name: "", email: "", company: "", message: "" });
+  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      setError("Please fill in your name, email, and message.");
+      return;
+    }
+    setError("");
+    setStatus("sending");
+    try {
+      await submitContactForm(form);
+      setStatus("sent");
+      setForm({ name: "", email: "", company: "", message: "" });
+    } catch (err) {
+      setStatus("error");
+      setError(err.message || "Something went wrong. Please try again.");
+    }
+  };
+
+  if (status === "sent") {
+    return (
+      <div className="contact-success">
+        <div className="contact-success-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <h3>Message sent</h3>
+        <p>Thanks for reaching out — we'll get back to you shortly.</p>
+        <button className="hero-cta-secondary" onClick={() => setStatus("idle")}>Send another message</button>
+      </div>
+    );
+  }
+
+  return (
+    <form className="contact-form" onSubmit={handleSubmit}>
+      {error && <div className="contact-form-error">{error}</div>}
+      <div className="contact-form-row">
+        <div className="contact-form-group">
+          <label htmlFor="contact-name">Name *</label>
+          <input id="contact-name" name="name" type="text" placeholder="Jane Doe" value={form.name} onChange={handleChange} />
+        </div>
+        <div className="contact-form-group">
+          <label htmlFor="contact-email">Email *</label>
+          <input id="contact-email" name="email" type="email" placeholder="jane@company.com" value={form.email} onChange={handleChange} />
+        </div>
+      </div>
+      <div className="contact-form-group">
+        <label htmlFor="contact-company">Company</label>
+        <input id="contact-company" name="company" type="text" placeholder="Acme Inc." value={form.company} onChange={handleChange} />
+      </div>
+      <div className="contact-form-group">
+        <label htmlFor="contact-message">Message *</label>
+        <textarea id="contact-message" name="message" placeholder="Tell us what you're looking for..." rows={5} value={form.message} onChange={handleChange} />
+      </div>
+      <button type="submit" className="contact-form-submit" disabled={status === "sending"}>
+        {status === "sending" ? "Sending..." : "Send message"}
+      </button>
+    </form>
   );
 };
 
@@ -504,8 +572,22 @@ const LandingPage = ({ onEnterApp, onSignupSuccess }) => {
         <button className="hero-cta-primary" onClick={() => setMode("register")}>Get started for free →</button>
       </section>
 
+      {/* Contact */}
+      <section className="contact-section" id="contact">
+        <div className="contact-copy">
+          <div className="section-label">Contact</div>
+          <h2 className="section-title">Let's talk</h2>
+          <p className="section-sub">
+            Questions, feedback, or want to see AgentCRM in action? Send a message and you'll hear back directly from the team.
+          </p>
+        </div>
+        <div className="contact-card">
+          <ContactForm />
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="landing-footer" id="contact">
+      <footer className="landing-footer">
         <div className="footer-inner">
           <div className="footer-brand">
             <div className="footer-logo">
