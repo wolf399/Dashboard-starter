@@ -18,7 +18,7 @@ const statusColors = {
 };
 
 const AddTaskModal = ({ onClose, onSave, users }) => {
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}");
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -199,7 +199,7 @@ const Tasks = ({ addToast }) => {
     }
   };
 
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}");
 
   const filteredTasks = tasks.filter((t) => {
     if (filter === "MINE") return t.assignedToId === currentUser.id;

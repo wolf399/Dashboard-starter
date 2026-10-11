@@ -6,7 +6,7 @@ import { UilSignOutAlt } from "@iconscout/react-unicons";
 const Sidebar = ({ onMenuSelect, openTicketCount = 0 }) => {
   const [selected, setSelected] = React.useState(0);
 
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
   const initials = user.name
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "A";
