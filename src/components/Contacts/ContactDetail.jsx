@@ -631,7 +631,7 @@ const ContactDetail = ({ contactId, onBack, addToast }) => {
   const [tasksList, setTasksList] = useState([]);
   const [users, setUsers] = useState([]);
 
-  const currentUser = useMemo(() => JSON.parse(localStorage.getItem("user") || "{}"), []);
+  const currentUser = useMemo(() => JSON.parse(sessionStorage.getItem("user") || "{}"), []);
 
   const loadContact = async () => {
     try { setContact(await getContact(contactId)); }
